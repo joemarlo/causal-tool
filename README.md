@@ -1,1 +1,1 @@
-# causal-tool
+# Interactive tool for learning causal inference
