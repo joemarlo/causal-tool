@@ -28,6 +28,64 @@ shinyUI(fluidPage(
         tabPanel(title = "Welcome",
                  includeMarkdown("markdowns/welcome_text.md")),
         
+        # fundamental problem of causal inference ---------------------------------
+        
+        tabPanel(title = "Fundamental problem",
+                 navlistPanel(
+                   id = "fundamental_nav",
+                   widths = c(1, 11),
+                   HTML('<div><h5>Steps</h5></div>'),
+                   tabPanel("1",
+                            sidebarLayout(
+                              sidebarPanel(
+                                width = 4,
+                                h3("What is the fundamental problem of causal inference?"),
+                                h5("Causal inference is a missing data problem. We can only observe one potential outcome. We either see the that the person receives the treatment or doesn't receive the treatment."),
+                                h5("For example, if a person smokes, will they get cancer? Consider the graph to the right."),
+                              ),
+                              mainPanel(width = 6,
+                                        plotOutput("fundamental_plot_one"))
+                            )),
+                   tabPanel("2",
+                            sidebarLayout(
+                              sidebarPanel(
+                                width = 4,
+                                h3("What is the fundamental problem of causal inference?"),
+                                h5("Causal inference is a missing data problem. We can only observe one potential outcome. We either see the that the person receives the treatment or doesn't receive the treatment."),
+                                h5("For example, if a person smokes, will they get cancer? Consider the graph to the right."),
+                                h5("But what if they didn't smoke, would they still get cancer?"),
+                              ),
+                              mainPanel(width = 6,
+                                        plotOutput("fundamental_plot_two"))
+                            )),
+                   tabPanel("3",
+                            sidebarLayout(
+                              sidebarPanel(
+                                width = 4,
+                                h3("What is the fundamental problem of causal inference?"),
+                                h5("Causal inference is a missing data problem. We can only observe one potential outcome. We either see the that the person receives the treatment or doesn't receive the treatment."),
+                                h5("For example, if a person smokes, will they get cancer? Consider the graph to the right."),
+                                h5("But what if they didn't smoke, would they still get cancer?"),
+                                h5("Seeing both outcomes, heart attack and no heart attack, is impossible.")
+                              ),
+                              mainPanel(width = 6,
+                                        plotOutput("fundamental_plot_three"))
+                            )),
+                   tabPanel("4",
+                            sidebarLayout(
+                              sidebarPanel(
+                                width = 4,
+                                h3("What is the fundamental problem of causal inference?"),
+                                h5("Causal inference is a missing data problem. We can only observe one potential outcome. We either see the that the person receives the treatment or doesn't receive the treatment."),
+                                h5("For example, if a person smokes, will they get cancer? Consider the graph to the right."),
+                                h5("But what if they didn't smoke, would they still get cancer?"),
+                                h5("Seeing both outcomes, heart attack and no heart attack, is impossible."),
+                                h5("And there may be [latent] and [confounding] variables.")
+                              ),
+                              mainPanel(width = 6,
+                                        plotOutput("fundamental_plot_four"))
+                            ))
+                 )), 
         
         # randomization page ------------------------------------------------------
         
@@ -35,31 +93,61 @@ shinyUI(fluidPage(
                  sidebarLayout(
                      sidebarPanel(
                          width = 4,
-                         h4("Click on points in the plot to assign them to the treatment group"),
+                         h3("Why do we randomize?"),
+                         h5("Randomization balances groups on both observed and unobserved characteristics. See this for yourself below. First set the x and y variables to observe."),
+                         br(),
+                         selectInput(
+                             inputId ="randomization_variable_x",
+                             label = "(Observed) x variable: ",
+                             multiple = FALSE,
+                             choices = setdiff(colnames(mtcars), "treat"),
+                             selected = setdiff(colnames(mtcars), "treat")[1]
+                         ),
+                         selectInput(
+                             inputId ="randomization_variable_y",
+                             label = "(Observed) y variable: ",
+                             multiple = FALSE,
+                             choices = setdiff(colnames(mtcars), "treat"),
+                             selected = setdiff(colnames(mtcars), "treat")[3]
+                         ),
+                         h5("Now select which datapoints to include in the treatment group by clicking on points in the plot."),
+                         h5("How do the univariate densities compare between treatment and control?"),
+                         h5("Now randomize the selections using the below button. How do the densities compare now?"),
                          br(),
                          actionButton(inputId = 'randomize_button',
-                                      label = "Randomize treatment")
+                                      label = "Randomize the treatment assignment"),
+                         br(), br(),
+                         actionButton(inputId = 'randomize_reset_button',
+                                      label = "Reset the treatment assignment"),
+                         br(), br(),
+                         HTML('<details><summary>What is this data?</summary>'),
+                         HTML('The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models). <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/mtcars.html">See here for more information.</a'),
+                         HTML('</details><br>')
                      ),
                      mainPanel(
                          width = 6,
-                         tabsetPanel(
-                             id = "upload_tabs",
-                             type = "tabs",
-                             tabPanel("Plot",
-                                      plotOutput('randomization_plot',
-                                                 click = "randomization_plot_click")),
-                             tabPanel("Treatment vs. control",
-                                      plotOutput('randomization_tc_plot'))
-                         )
+                         plotOutput('randomization_plot',
+                                    click = "randomization_plot_click"),
+                         br(),
+                         plotOutput('randomization_tc_plot'),
+                         absolutePanel(id = "randomization_floating_box", 
+                                       class = "floating_message",
+                                       top = 50, left = "auto", right = 50, bottom = "auto",
+                                       width = "30%", height = "auto", draggable = FALSE,
+                                       "Click on points to assign them to treatment!")
                      )
                  )),
         
-        # matching page -----------------------------------------------------------
+        
+        # difference in means -----------------------------------------------------------
         
         tabPanel(title = "Difference in means",
                  sidebarLayout(
                      sidebarPanel(
                          width = 4,
+                         h3("Can we just take the average effect between the treatment and control groups?"),
+                         h5("...explain difference in means..."),
+                         br(),
                          h4("Results"),
                          htmlOutput("means_summary"),
                          br(),
@@ -104,7 +192,7 @@ shinyUI(fluidPage(
                  )
         ),
         
-        # matching page -----------------------------------------------------------
+        # regression  -----------------------------------------------------------
         
         tabPanel(title = "Regression"),
         
@@ -127,8 +215,8 @@ shinyUI(fluidPage(
                                      selected = "Binomial - logit"),
                          selectInput(inputId = "propensity_select_independent",
                                      label = "Independent variables:",
-                                     choices = setdiff(vars, c("treat", "ppvtr.36")),
-                                     selected = setdiff(vars, c("treat", "ppvtr.36")),
+                                     choices = setdiff(colnames(mtcars), "treat"),
+                                     selected = setdiff(colnames(mtcars), "treat"),
                                      multiple = TRUE),
                          radioButtons(inputId = "propensity_replacement_type_input",
                                      label = "Replacement type:",

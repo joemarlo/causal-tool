@@ -1,6 +1,77 @@
 shinyServer(function(input, output) {
 
 
+
+# fundamental problem -----------------------------------------------------
+
+  output$fundamental_plot_one <- renderPlot({
+    
+    simple_dag <- dagify(
+      Heart_attack ~ Smokes
+    )
+    
+    ggdag(
+      simple_dag,
+      node_size = 20,
+      stylized = TRUE,
+      text_size = 2
+    ) + theme_void()
+    
+  })
+  
+  output$fundamental_plot_two <- renderPlot({
+    
+    simple_not_dag <- dagify(
+      No_heart_attack ~ Does_not_smoke
+    )
+    
+    ggdag(
+      simple_not_dag,
+      node_size = 20,
+      stylized = TRUE,
+      text_size = 2
+    ) + theme_void()
+    
+  })  
+  
+  output$fundamental_plot_three <- renderPlot({
+    
+    tree_dag <- dagify(
+      Heart_attack ~ Smokes,
+      No_heart_attack ~ Does_not_smoke,
+      Smokes ~ Person,
+      Does_not_smoke ~ Person
+    ) %>% tidy_dagitty(layout = "tree")
+    
+    ggdag(
+      tree_dag,
+      node_size = 20,
+      stylized = TRUE,
+      text_size = 2
+    ) + theme_void()
+    
+  })
+  
+  output$fundamental_plot_four <- renderPlot({
+    
+    heart_dag <- dagify(
+      Heart_attack ~ Cholesterol,
+      Cholesterol ~ Smoking + Age,
+      Smoking ~ Genetics,
+      Cholesterol ~ Genetics,
+      outcome = "Heart_attack"
+    )
+    
+    ggdag(
+      heart_dag,
+      node_size = 20,
+      stylized = TRUE,
+      text_size = 2.5
+    ) + theme_void()
+    
+  })
+  
+  
 # randomization -----------------------------------------------------------
 
     selected_points <- reactiveValues(car_names = NULL)
@@ -11,36 +82,59 @@ shinyServer(function(input, output) {
         #   of selected datapoints
         
         tryCatch({
-            event_car <- rownames(nearPoints(mtcars, input$randomization_plot_click))
+            event_car <- rownames(nearPoints(mtcars, input$randomization_plot_click, threshold = 7))[1]
             if (event_car %in% selected_points$car_names){
-                selected_points$car_names <- setdiff(selected_points$car_names, event_car)
+              # remove point from selected list  
+              selected_points$car_names <- setdiff(selected_points$car_names, event_car)
             } else if (event_car %in% rownames(mtcars)) {
-                selected_points$car_names <- c(selected_points$car_names, event_car)
+              # add point to selected list  
+              selected_points$car_names <- c(selected_points$car_names, event_car)
+              # remove floating UI box
+              removeUI(selector = "#randomization_floating_box")
             }},
             error = function(e) e
         )
+      
     })
     
+    # randomize assignment when user clicks button
     observeEvent(input$randomize_button, {
-        selected_points$car_names <- sample(rownames(mtcars), size = 10)
+        selected_points$car_names <- sample(rownames(mtcars), size = nrow(mtcars)/2)
     })
-        
-    output$randomization_plot <- renderPlot({
-        mtcars %>%
-            rownames_to_column() %>% 
-            mutate(treatment = rowname %in% selected_points$car_names) %>% 
-            ggplot(aes(x = wt, y = mpg, color = treatment)) +
-            geom_point(alpha = 0.8, size = 7)
+
+    # remove assignment when user clicks button    
+    observeEvent(input$randomize_reset_button, {
+        selected_points$car_names <- c()
     })
     
+    # top plot    
+    output$randomization_plot <- renderPlot({
+      mtcars %>%
+        dplyr::select(-treat) %>%
+        rownames_to_column() %>% 
+        mutate(Group = if_else(rowname %in% selected_points$car_names,
+                                   'Treatment', 'Control')) %>% 
+        ggplot(aes_string(x = sym(input$randomization_variable_x), 
+                          y = sym(input$randomization_variable_y))) +
+        geom_point(aes(fill = Group), alpha = 0.7, size = 7, 
+                       color = 'black', pch = 21, stroke = 1)
+    })
+    
+    # bottom plot
     output$randomization_tc_plot <- renderPlot({
-        mtcars %>%
-            rownames_to_column() %>% 
-            mutate(treatment = rowname %in% selected_points$car_names) %>% 
-            pivot_longer(cols = where(is.numeric)) %>% 
-            ggplot(aes(x = value, group = treatment, fill = treatment)) +
-            geom_density(alpha = 0.5) +
-            facet_wrap(~name, scales = 'free')
+      mtcars %>%
+        dplyr::select(-treat) %>%
+        rownames_to_column() %>%
+        mutate(Group = if_else(rowname %in% selected_points$car_names,
+                               'Treatment', 'Control')) %>%
+        pivot_longer(cols = where(is.numeric)) %>%
+        ggplot(aes(x = value, group = Group, fill = Group)) +
+        geom_density(alpha = 0.5) +
+        facet_wrap(~name, scales = 'free') +
+        labs(title = "Univariate densities of the observed and unobserved variables",
+             x = NULL,
+             y = NULL) +
+        theme(legend.position = 'none')
     })
 
 # difference in means -----------------------------------------------------
@@ -96,11 +190,11 @@ shinyServer(function(input, output) {
         user_formula <- reformulate(input$propensity_select_independent, 'treat')
             
         if (input$propensity_select_model == "Binomial - logit"){
-            model <- glm(user_formula, family = binomial('logit'), data = final_df)
+            model <- glm(user_formula, family = binomial('logit'), data = mtcars)
         } else if (input$propensity_select_model == "Binomial - probit"){
-            model <- glm(user_formula,  family = binomial('probit'), data = final_df)
+            model <- glm(user_formula,  family = binomial('probit'), data = mtcars)
         } else if (input$propensity_select_model == "GAM"){
-            model <- gam::gam(user_formula, data = final_df)
+            model <- gam::gam(user_formula, data = mtcars)
         } else stop("No model selected")
         
         # get propensity scores
@@ -110,7 +204,7 @@ shinyServer(function(input, output) {
         if (input$propensity_replacement_type_input == 'With'){
             
             # matching with replacement
-            matches_with <- arm::matching(z = final_df$treat, score = propensity_scores, replace = TRUE)
+            matches_with <- arm::matching(z = mtcars$treat, score = propensity_scores, replace = TRUE)
             
             # df of matches
             matches <- matches_with$pairs %>% 
@@ -119,20 +213,20 @@ shinyServer(function(input, output) {
             
         } else {
             # matching without replacement
-            matches_wo <- arm::matching(z = final_df$treat, score = propensity_scores, replace = FALSE)
+            matches_wo <- arm::matching(z = mtcars$treat, score = propensity_scores, replace = FALSE)
             
             # df of matches
             matches <- matches_wo %>% 
                 as_tibble() %>% 
                 mutate(index = row_number()) %>% 
-                .[final_df$treat == 1,] %>% 
+                .[mtcars$treat == 1,] %>% 
                 dplyr::select(index, match = matched)
         }
         
         # df of propensity scores
-        scores <- tibble(Z = final_df$treat,
+        scores <- tibble(Z = mtcars$treat,
                          score = propensity_scores,
-                         index = 1:nrow(final_df))
+                         index = 1:nrow(mtcars))
         
         # plot
         scores %>%
