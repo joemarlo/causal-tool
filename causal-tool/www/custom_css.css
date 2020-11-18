@@ -47,6 +47,12 @@ summary{
   box-shadow: inset 0 0 0 rgba(0, 0, 0, 0.00);;
 }
 
+/* nav tabs at the top of the page */
+#nav > li.active > a {
+  color: #fff;
+  background-color: #5c5980;
+}
+
 /* navigation pills on the left side */
 .nav-pills > li > a {
     border-radius: 0 0 0 0;
@@ -135,74 +141,6 @@ within the selectize dropdowns */
 
 .btn:active {
   background-color: #54536e !important;
-}
-
-/* specfic ids to modify */
-#exploration_button_download_plot, #invitations_button_download_data, #invitations_button_restart {
-  width: 120px; 
-  height: 43px;
-  border-radius: 5px;
-  vertical-align: middle; 
-  font-size: 0.85em;
-}
-
-#invitations_button_download_data, #invitations_button_restart {
-  display: inline-block; 
-  width: 200px; 
-}
-
-#inline label{
-  display: table-cell;
-  text-align: left; 
-  vertical-align: middle; 
-  padding: 10px 50px 10px 10px;
-  font-weight: 300;
-} 
-#inline .form-group {
-  display: table-row;
-}
-
-#invitations_button_send {
-  height: 70px;
-  font-size: 1.35em;
-  font-weight: 500;
-  /*padding: 10px 0 10px 0;*/
-}
-
-#results_button_restart, #invitations_button_restart {
-  background-color: #ab2c2c !important;
-}
-
-#results_button_restart:hover, #invitations_button_restart:hover {
-  background-color: #ba3030 !important;
-}
-
-#results_button_restart:active, #invitations_button_restart:active {
-  background-color: #c73a3a !important;
-}
-
-#upload_file_div .btn {
-  font-size: normal;
-  word-wrap: normal;
-  padding: 7px;
-}
-
-#upload_file_div .progress-bar {
-  background-color: #5d5c7a;
-}
-
-#upload_file_div .form-control {
-  -webkit-border-radius: 0 0 0 0;
-  -moz-border-radius: 0 0 0 0;
-  border-radius: 0 0 0 0;
-}
-
-#upload_file_div .form-control:focus {
-  border-color: #5c5980;
-  /*color: #f5f5f5 !important;*/
-  outline: 0;
-  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(92, 89, 128, 0.6);
-  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(92, 89, 128, 0.6);
 }
 
 .floating_message {
@@ -332,3 +270,4 @@ border 0 fixes the buttons moving around when you hover / click */
    background:-o-linear-gradient(top, #e8e8e8 0%, #e8e8e8 100%)!important;
    background:linear-gradient(to bottom, #e8e8e8 0%, #e8e8e8 100%)!important;
 }
+

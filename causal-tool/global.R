@@ -19,3 +19,4 @@ filtered_df <- hw4[hw4$bw < 3000,]
 # define variables of interest
 vars <- unique(setdiff(c("ppvtr.36", colnames(filtered_df)), c("momed", "st99")))
 final_df <- filtered_df[, vars]
+

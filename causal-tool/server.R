@@ -1,6 +1,48 @@
 shinyServer(function(input, output) {
 
 
+# randomization -----------------------------------------------------------
+
+    selected_points <- reactiveValues(car_names = NULL)
+    
+    observeEvent(input$randomization_plot_click, {
+        
+        # for each click on the plot, add or remove that datapoint from the list
+        #   of selected datapoints
+        
+        tryCatch({
+            event_car <- rownames(nearPoints(mtcars, input$randomization_plot_click))
+            if (event_car %in% selected_points$car_names){
+                selected_points$car_names <- setdiff(selected_points$car_names, event_car)
+            } else if (event_car %in% rownames(mtcars)) {
+                selected_points$car_names <- c(selected_points$car_names, event_car)
+            }},
+            error = function(e) e
+        )
+    })
+    
+    observeEvent(input$randomize_button, {
+        selected_points$car_names <- sample(rownames(mtcars), size = 10)
+    })
+        
+    output$randomization_plot <- renderPlot({
+        mtcars %>%
+            rownames_to_column() %>% 
+            mutate(treatment = rowname %in% selected_points$car_names) %>% 
+            ggplot(aes(x = wt, y = mpg, color = treatment)) +
+            geom_point(alpha = 0.8, size = 7)
+    })
+    
+    output$randomization_tc_plot <- renderPlot({
+        mtcars %>%
+            rownames_to_column() %>% 
+            mutate(treatment = rowname %in% selected_points$car_names) %>% 
+            pivot_longer(cols = where(is.numeric)) %>% 
+            ggplot(aes(x = value, group = treatment, fill = treatment)) +
+            geom_density(alpha = 0.5) +
+            facet_wrap(~name, scales = 'free')
+    })
+
 # difference in means -----------------------------------------------------
 
     # data generating process
@@ -19,6 +61,8 @@ shinyServer(function(input, output) {
         
         return(tibble(x = pre_test_scores, y_0, y_1, z, Y))
     })
+    
+
     
     # summary output
     output$means_summary <- renderText({

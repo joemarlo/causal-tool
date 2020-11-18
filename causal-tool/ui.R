@@ -5,8 +5,7 @@ shinyUI(fluidPage(
     ),
     
     # set default slider skin
-    chooseSliderSkin(skin = "Flat",
-                     color = "#221146"),
+    chooseSliderSkin(skin = "Flat", color = "#221146"),
     
     # load custom CSS file
     includeCSS("www/custom_css.css"),
@@ -20,14 +19,15 @@ shinyUI(fluidPage(
     
     br(),
     
-    navlistPanel(
-        id = "nav",
-        widths = c(2, 10),
+    navbarPage(
+            title = NULL,
+            id = "nav",
         
         # welcome page ------------------------------------------------------------
         
-        tabPanel("Welcome",
+        tabPanel(title = "Welcome",
                  includeMarkdown("markdowns/welcome_text.md")),
+        
         
         # randomization page ------------------------------------------------------
         
@@ -35,15 +35,21 @@ shinyUI(fluidPage(
                  sidebarLayout(
                      sidebarPanel(
                          width = 4,
-                         h4("Upload your dataset that you downloaded in Assignment One"),
+                         h4("Click on points in the plot to assign them to the treatment group"),
+                         br(),
+                         actionButton(inputId = 'randomize_button',
+                                      label = "Randomize treatment")
                      ),
                      mainPanel(
                          width = 6,
                          tabsetPanel(
                              id = "upload_tabs",
                              type = "tabs",
-                             tabPanel("Plots"),
-                             tabPanel("Sites invited")
+                             tabPanel("Plot",
+                                      plotOutput('randomization_plot',
+                                                 click = "randomization_plot_click")),
+                             tabPanel("Treatment vs. control",
+                                      plotOutput('randomization_tc_plot'))
                          )
                      )
                  )),
@@ -63,9 +69,9 @@ shinyUI(fluidPage(
                              inputId = "means_select_n",
                              label = "n",
                              value = 1000,
-                             min = 10,
+                             min = 100,
                              max = 10000,
-                             step = 10
+                             step = 100
                          ),
                          numericInput(
                              inputId = "means_select_tau",
@@ -101,6 +107,10 @@ shinyUI(fluidPage(
         # matching page -----------------------------------------------------------
         
         tabPanel(title = "Regression"),
+        
+        # common support  -----------------------------------------------------------
+        
+        tabPanel(title = "Common support"),
         
         # propensity scores -----------------------------------------------------------
         
