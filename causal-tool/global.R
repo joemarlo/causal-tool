@@ -7,6 +7,7 @@ library(shinyWidgets) # for alerts
 library(shinyBS) # for popovers
 library(viridis) # for better colors for color blind people
 library(ggdag) # for DAG plots
+library(plotly) # for animated plots
 set.seed(44)
 
 # load data for propensitiy scores

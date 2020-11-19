@@ -41,7 +41,7 @@ shinyUI(fluidPage(
                                 width = 4,
                                 h3("What is the fundamental problem of causal inference?"),
                                 h5("Causal inference is a missing data problem. We can only observe one potential outcome. We either see the that the person receives the treatment or doesn't receive the treatment."),
-                                h5("For example, if a person smokes, will they get cancer? Consider the graph to the right."),
+                                h5("For example, if a person smokes, will they have a heart attack? Consider the graph to the right."),
                               ),
                               mainPanel(width = 6,
                                         plotOutput("fundamental_plot_one"))
@@ -52,8 +52,8 @@ shinyUI(fluidPage(
                                 width = 4,
                                 h3("What is the fundamental problem of causal inference?"),
                                 h5("Causal inference is a missing data problem. We can only observe one potential outcome. We either see the that the person receives the treatment or doesn't receive the treatment."),
-                                h5("For example, if a person smokes, will they get cancer? Consider the graph to the right."),
-                                h5("But what if they didn't smoke, would they still get cancer?"),
+                                h5("For example, if a person smokes, will they have a heart attack? Consider the graph to the right."),
+                                h5("But what if they didn't smoke, would they still have a heart attack?"),
                               ),
                               mainPanel(width = 6,
                                         plotOutput("fundamental_plot_two"))
@@ -64,8 +64,8 @@ shinyUI(fluidPage(
                                 width = 4,
                                 h3("What is the fundamental problem of causal inference?"),
                                 h5("Causal inference is a missing data problem. We can only observe one potential outcome. We either see the that the person receives the treatment or doesn't receive the treatment."),
-                                h5("For example, if a person smokes, will they get cancer? Consider the graph to the right."),
-                                h5("But what if they didn't smoke, would they still get cancer?"),
+                                h5("For example, if a person smokes, will they have a heart attack? Consider the graph to the right."),
+                                h5("But what if they didn't smoke, would they still have a heart attack?"),
                                 h5("Seeing both outcomes, heart attack and no heart attack, is impossible.")
                               ),
                               mainPanel(width = 6,
@@ -77,8 +77,8 @@ shinyUI(fluidPage(
                                 width = 4,
                                 h3("What is the fundamental problem of causal inference?"),
                                 h5("Causal inference is a missing data problem. We can only observe one potential outcome. We either see the that the person receives the treatment or doesn't receive the treatment."),
-                                h5("For example, if a person smokes, will they get cancer? Consider the graph to the right."),
-                                h5("But what if they didn't smoke, would they still get cancer?"),
+                                h5("For example, if a person smokes, will they have a heart attack? Consider the graph to the right."),
+                                h5("But what if they didn't smoke, would they still have a heart attack?"),
                                 h5("Seeing both outcomes, heart attack and no heart attack, is impossible."),
                                 h5("And there may be [latent] and [confounding] variables.")
                               ),
@@ -184,9 +184,12 @@ shinyUI(fluidPage(
                          tabsetPanel(
                              id = "means_tabs",
                              type = "tabs",
-                             tabPanel("Plot",
-                                      plotOutput("means_plot", height = 500)
-                             )
+                             tabPanel("[ATE]",
+                                      plotlyOutput("means_plot_ATE", height = 500)), 
+                             tabPanel("[Estimating SATE]",
+                                      plotlyOutput("means_plot_est_SATE", height = 500)), 
+                             tabPanel("[Regression]",
+                                      plotOutput('means_plot_regression', height = 500))
                          )
                      )
                  )

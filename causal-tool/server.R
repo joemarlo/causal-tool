@@ -82,7 +82,7 @@ shinyServer(function(input, output) {
         #   of selected datapoints
         
         tryCatch({
-            event_car <- rownames(nearPoints(mtcars, input$randomization_plot_click, threshold = 7))[1]
+            event_car <- rownames(nearPoints(mtcars, input$randomization_plot_click, threshold = 8))[1]
             if (event_car %in% selected_points$car_names){
               # remove point from selected list  
               selected_points$car_names <- setdiff(selected_points$car_names, event_car)
@@ -172,13 +172,136 @@ shinyServer(function(input, output) {
                "Estimated SATE from regression: ", reg)
     })  
         
-    output$means_plot <- renderPlot({
-        DGP() %>% 
-            pivot_longer(cols = c('y_0', 'y_1')) %>% 
-            ggplot(aes(x = x, y = value, group = name, color = name)) +
-            geom_point(alpha = 0.5) +
-            geom_smooth(method = 'lm', formula = y ~ x)
+    output$means_plot_ATE <- renderPlotly({
+        # DGP() %>% 
+        #     pivot_longer(cols = c('y_0', 'y_1')) %>% 
+        #     ggplot(aes(x = x, y = value, group = name, color = name)) +
+        #     geom_point(alpha = 0.5) +
+        #     geom_smooth(method = 'lm', formula = y ~ x)
+      
+      dat <- DGP()
+      
+      # create first frame
+      base_data <- dat %>%
+        mutate(frame = 1) %>%
+        pivot_longer(cols = c('y_0', 'y_1'))
+      
+      # create second frame by summarize the y axis
+      mean_y <- dat %>%
+        mutate(frame = 2) %>%
+        pivot_longer(cols = c('y_0', 'y_1')) %>%
+        group_by(name) %>%
+        mutate(value = mean(value)) %>% 
+        ungroup()
+      
+      # create third frame
+      mean_x <- mean_y %>% 
+        mutate(x = mean(x),
+               frame = 3)
+      
+      # create frame for error bars
+      # diff <- mean_y %>% 
+      #   group_by(name) %>% 
+      #   summarize(y_diff = mean(value),
+      #             x_diff = mean(x)*1.01,
+      #             .groups = 'drop') %>% 
+      #   pivot_wider(values_from = c('y_diff', 'x_diff')) %>% 
+      #   mutate(frame = 3)
+      
+      # build the plot
+      anim_plot <- base_data %>%
+        bind_rows(mean_y, mean_x) %>%
+        ggplot() +
+        geom_point(aes(
+          frame = frame,
+          x = x,
+          y = value,
+          group = name,
+          color = name
+        ), alpha = 0.3) +
+        # geom_errorbar(data = diff,
+        #               aes(frame = frame, x = x_diff_y_0,
+        #                   ymin = y_diff_y_0, ymax = y_diff_y_1),
+        #               color = 'grey20', size = 2) +
+        labs(x = 'x',
+             y = 'y')
+      
+      # animate the plot
+      anim_plot <- ggplotly(anim_plot, tooltip = FALSE) %>% 
+        config(displayModeBar = FALSE) %>% 
+        layout(legend = list(orientation = "h", xanchor = "center", x = 0.5, y = 1.1),
+               xaxis = list(fixedrange = TRUE),
+               yaxis = list(fixedrange = TRUE)) %>% 
+        animation_opts(frame = 1500, redraw = FALSE) %>% 
+        animation_slider(hide = TRUE) %>% 
+        animation_button(label = "Animate")
+      
+      anim_plot
+      
     })
+
+    output$means_plot_est_SATE <- renderPlotly({
+      
+      dat <- DGP()
+      
+      # create first frame
+      base_data <- dat %>%
+        mutate(frame = 1) %>%
+        pivot_longer(cols = c('y_0', 'y_1'))
+      
+      # create second frame that removes the unobserved
+      second_frame <- base_data %>%
+        mutate(frame = 2) %>%
+        filter((z == 0 & name == 'y_0') | (z == 1 & name == "y_1"))
+      
+      # create second frame by summarize the y axis
+      mean_y <- second_frame %>%
+        mutate(frame = 3) %>% 
+        group_by(name) %>%
+        mutate(value = mean(value)) %>% 
+        ungroup()
+      
+      # create third frame
+      mean_x <- mean_y %>% 
+        mutate(x = mean(x),
+               frame = 4)
+      
+      # build the plot
+      anim_plot <- base_data %>%
+        bind_rows(second_frame, mean_y, mean_x) %>%
+        ggplot() +
+        geom_point(aes(
+          frame = frame,
+          x = x,
+          y = value,
+          group = name,
+          color = name
+        ), alpha = 0.3) +
+        labs(x = 'x',
+             y = 'y')
+      
+      # animate the plot
+      anim_plot <- ggplotly(anim_plot, tooltip = FALSE) %>% 
+        config(displayModeBar = FALSE) %>% 
+        layout(legend = list(orientation = "h", xanchor = "center", x = 0.5, y = 1.1),
+               xaxis = list(fixedrange = TRUE),
+               yaxis = list(fixedrange = TRUE)) %>% 
+        animation_opts(frame = 1500, redraw = FALSE) %>% 
+        animation_slider(hide = TRUE) %>% 
+        animation_button(label = "Animate")
+      
+      anim_plot
+      
+    }) 
+    
+    output$means_plot_regression <- renderPlot({
+      DGP() %>% 
+        pivot_longer(cols = c('y_0', 'y_1')) %>% 
+        ggplot(aes(x = x, y = value, group = name, color = name)) +
+        geom_point(alpha = 0.5) +
+        geom_smooth(method = 'lm', formula = y ~ x)
+    })
+  
     
     
 
