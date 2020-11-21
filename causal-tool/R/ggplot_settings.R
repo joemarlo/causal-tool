@@ -11,6 +11,8 @@ theme_custom <- function()
       size = 11,
       face = "bold"
     ),
+    text = element_text(family = "Helvetica",
+                        color = "gray30"),
     legend.position = 'bottom'
   )
 

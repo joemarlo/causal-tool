@@ -34,8 +34,7 @@ shinyUI(fluidPage(
                  navlistPanel(
                    id = "fundamental_nav",
                    widths = c(1, 11),
-                   HTML('<div><h5>Steps</h5></div>'),
-                   tabPanel("1",
+                   tabPanel("1)",
                             sidebarLayout(
                               sidebarPanel(
                                 width = 4,
@@ -46,7 +45,7 @@ shinyUI(fluidPage(
                               mainPanel(width = 6,
                                         plotOutput("fundamental_plot_one"))
                             )),
-                   tabPanel("2",
+                   tabPanel("2)",
                             sidebarLayout(
                               sidebarPanel(
                                 width = 4,
@@ -58,7 +57,7 @@ shinyUI(fluidPage(
                               mainPanel(width = 6,
                                         plotOutput("fundamental_plot_two"))
                             )),
-                   tabPanel("3",
+                   tabPanel("3)",
                             sidebarLayout(
                               sidebarPanel(
                                 width = 4,
@@ -71,7 +70,7 @@ shinyUI(fluidPage(
                               mainPanel(width = 6,
                                         plotOutput("fundamental_plot_three"))
                             )),
-                   tabPanel("4",
+                   tabPanel("4)",
                             sidebarLayout(
                               sidebarPanel(
                                 width = 4,
@@ -94,21 +93,21 @@ shinyUI(fluidPage(
                      sidebarPanel(
                          width = 4,
                          h3("Why do we randomize?"),
-                         h5("Randomization balances groups on both observed and unobserved characteristics. See this for yourself below. First set the x and y variables to observe."),
+                         h5("Randomization balances groups on both observed and unobserved characteristics. See this for yourself. First set the x and y variables to observe."),
                          br(),
                          selectInput(
                              inputId ="randomization_variable_x",
                              label = "(Observed) x variable: ",
                              multiple = FALSE,
-                             choices = setdiff(colnames(mtcars), "treat"),
-                             selected = setdiff(colnames(mtcars), "treat")[1]
+                             choices = setdiff(colnames(master_df), "treat"),
+                             selected = setdiff(colnames(master_df), "treat")[1]
                          ),
                          selectInput(
                              inputId ="randomization_variable_y",
                              label = "(Observed) y variable: ",
                              multiple = FALSE,
-                             choices = setdiff(colnames(mtcars), "treat"),
-                             selected = setdiff(colnames(mtcars), "treat")[3]
+                             choices = setdiff(colnames(master_df), "treat"),
+                             selected = setdiff(colnames(master_df), "treat")[3]
                          ),
                          h5("Now select which datapoints to include in the treatment group by clicking on points in the plot."),
                          h5("How do the univariate densities compare between treatment and control?"),
@@ -129,7 +128,7 @@ shinyUI(fluidPage(
                          plotOutput('randomization_plot',
                                     click = "randomization_plot_click"),
                          br(),
-                         plotOutput('randomization_tc_plot'),
+                         plotOutput('randomization_tc_plot', height = 500),
                          absolutePanel(id = "randomization_floating_box", 
                                        class = "floating_message",
                                        top = 50, left = "auto", right = 50, bottom = "auto",
@@ -141,7 +140,7 @@ shinyUI(fluidPage(
         
         # difference in means -----------------------------------------------------------
         
-        tabPanel(title = "Difference in means",
+        tabPanel(title = "Treatment effects",
                  sidebarLayout(
                      sidebarPanel(
                          width = 4,
@@ -151,14 +150,14 @@ shinyUI(fluidPage(
                          h4("Results"),
                          htmlOutput("means_summary"),
                          br(),
-                         HTML('<details><summary>Data generation process</summary>'),
+                         HTML('<details><summary>More information</summary>'),
                          h4("Data generation process"),
                          numericInput(
                              inputId = "means_select_n",
                              label = "n",
-                             value = 1000,
+                             value = 500,
                              min = 100,
-                             max = 10000,
+                             max = 2500,
                              step = 100
                          ),
                          numericInput(
@@ -184,8 +183,8 @@ shinyUI(fluidPage(
                          tabsetPanel(
                              id = "means_tabs",
                              type = "tabs",
-                             tabPanel("[ATE]",
-                                      plotlyOutput("means_plot_ATE", height = 500)), 
+                             tabPanel("[SATE]",
+                                      plotlyOutput("means_plot_SATE", height = 500)), 
                              tabPanel("[Estimating SATE]",
                                       plotlyOutput("means_plot_est_SATE", height = 500)), 
                              tabPanel("[Regression]",
@@ -195,21 +194,34 @@ shinyUI(fluidPage(
                  )
         ),
         
-        # regression  -----------------------------------------------------------
-        
-        tabPanel(title = "Regression"),
-        
-        # common support  -----------------------------------------------------------
-        
-        tabPanel(title = "Common support"),
-        
+
         # propensity scores -----------------------------------------------------------
         
         tabPanel(title = "Propensity scores",
                  sidebarLayout(
                      sidebarPanel(
                          width = 4,
-                         h4("Propensity scores"),
+                         h3("Propensity scores are the probability that an observation is assigned to treatment based on the observed covariates"),
+                         h5("The scores can reduce selection bias and constrain inference to areas of common support."),
+                         h5("In order to illustrate the mechanism, let's first set treatment as either random or a function of the covariates."),
+                         radioButtons(inputId = 'propensity_select_method',
+                                     label = 'Method to determine treatment:',
+                                     choices = c('Random', 'Dependent on covariates'),
+                                     selected = 'Random'),
+                         conditionalPanel(
+                             condition = "input.propensity_select_method == 'Dependent on covariates'",
+                             selectInput(inputId = "propensity_select_covariates",
+                                         label = "Covariates:",
+                                         choices = setdiff(colnames(master_df), "treat"),
+                                         selected = setdiff(colnames(master_df), "treat"),
+                                         multiple = TRUE),
+                             strong("Formula:"),
+                             uiOutput("propensity_select_treat_formula"),
+                             br()
+                         ),
+                         actionButton(inputId = 'propensity_button_set_treat',
+                                      label = 'Set treatment assignment'),
+                         br(), br(),
                          selectInput(inputId = "propensity_select_model",
                                      label = "Model family",
                                      choices = c("Binomial - logit",
@@ -218,8 +230,8 @@ shinyUI(fluidPage(
                                      selected = "Binomial - logit"),
                          selectInput(inputId = "propensity_select_independent",
                                      label = "Independent variables:",
-                                     choices = setdiff(colnames(mtcars), "treat"),
-                                     selected = setdiff(colnames(mtcars), "treat"),
+                                     choices = setdiff(colnames(master_df), "treat"),
+                                     selected = setdiff(colnames(master_df), "treat"),
                                      multiple = TRUE),
                          radioButtons(inputId = "propensity_replacement_type_input",
                                      label = "Replacement type:",
@@ -231,17 +243,27 @@ shinyUI(fluidPage(
                          tabsetPanel(
                              id = "upload_tabs",
                              type = "tabs",
+                             tabPanel("Propensity scores",
+                                      # tableOutput('p_score_table')),
+                                      br(),
+                                      plotOutput('propensity_plot_scores')),
                              tabPanel("Matching",
-                                      plotOutput("propensity_plot", height = 300)
+                                      br(),
+                                      plotOutput("propensity_plot_matching", height = 300)
                                       ),
                              tabPanel("Overlap and balance")
                          )
                      )
                  )),
         
+        
+        # common support  -----------------------------------------------------------
+        
+        # tabPanel(title = "Common support"),
+        
         # matching page -----------------------------------------------------------
         
-        tabPanel(title = "Matching"),
+        # tabPanel(title = "Matching"),
         
         # matching page -----------------------------------------------------------
         

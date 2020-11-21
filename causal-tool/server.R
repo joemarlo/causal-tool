@@ -6,87 +6,98 @@ shinyServer(function(input, output) {
 
   output$fundamental_plot_one <- renderPlot({
     
-    simple_dag <- dagify(
-      Heart_attack ~ Smokes
-    )
+    tibble(label = c('Heart\nattack', 'Smokes'),
+           x = c(0, 1),
+           y = c(0, 1)) %>% 
+      ggplot(aes(x = x, y = y)) +
+      geom_point(shape = 21, size = 30) +
+      geom_text(aes(label = label)) +
+      geom_segment(data = tibble(x = 0.9, xend = 0.1,
+                                 y = 0.9, yend = 0.1),
+                   aes(x = x, xend = xend, y = y, yend = yend),
+                   alpha = 0.5, lineend = 'round', linejoin = 'mitre',
+                   size = 1.2,
+                   arrow = arrow(length = unit(0.04, "npc"))) +
+      coord_cartesian(xlim = c(-0.25, 1.25), ylim = c(-0.25, 1.25)) +
+      theme_void()
     
-    ggdag(
-      simple_dag,
-      node_size = 20,
-      stylized = TRUE,
-      text_size = 2
-    ) + theme_void()
     
   })
   
   output$fundamental_plot_two <- renderPlot({
     
-    simple_not_dag <- dagify(
-      No_heart_attack ~ Does_not_smoke
-    )
-    
-    ggdag(
-      simple_not_dag,
-      node_size = 20,
-      stylized = TRUE,
-      text_size = 2
-    ) + theme_void()
+    tibble(label = c('No heart\nattack', 'Does not\nsmoke'),
+           x = c(0, -1),
+           y = c(0, 1)) %>% 
+      ggplot(aes(x = x, y = y)) +
+      geom_point(shape = 21, size = 30) +
+      geom_text(aes(label = label)) +
+      geom_segment(data = tibble(x = -0.9, xend = -0.1,
+                                 y = 0.9, yend = 0.1),
+                   aes(x = x, xend = xend, y = y, yend = yend),
+                   alpha = 0.5, lineend = 'round', linejoin = 'mitre',
+                   size = 1.2,
+                   arrow = arrow(length = unit(0.04, "npc"))) +
+      coord_cartesian(xlim = c(-1.25, 0.25), ylim = c(-0.25, 1.25)) +
+      theme_void()
     
   })  
   
   output$fundamental_plot_three <- renderPlot({
     
-    tree_dag <- dagify(
-      Heart_attack ~ Smokes,
-      No_heart_attack ~ Does_not_smoke,
-      Smokes ~ Person,
-      Does_not_smoke ~ Person
-    ) %>% tidy_dagitty(layout = "tree")
-    
-    ggdag(
-      tree_dag,
-      node_size = 20,
-      stylized = TRUE,
-      text_size = 2
-    ) + theme_void()
+    tibble(label = c('Person', 'Smoke', 'Heart\nattack', 'Does not\nsmokes', 'No heart\n attack'),
+           x = c(0, -1, -1, 1, 1),
+           y = c(0, -1, -2, -1, -2)) %>% 
+      ggplot(aes(x = x, y = y)) +
+      geom_point(shape = 21, size = 30) +
+      geom_text(aes(label = label)) +
+      geom_segment(data = tibble(x = c(-0.2, 0.2, -1, 1), xend = c(-0.8, 0.8, -1, 1),
+                                 y = c(-0.2, -0.2, -1.3, -1.3), yend = c(-0.8, -0.8, -1.7, -1.7)),
+                   aes(x = x, xend = xend, y = y, yend = yend),
+                   alpha = 0.5, lineend = 'round', linejoin = 'mitre',
+                   size = 1.2,
+                   arrow = arrow(length = unit(0.04, "npc"))) +
+      coord_cartesian(xlim = c(-1.25, 1.25), ylim = c(-2.25, 0.25)) +
+      theme_void()
     
   })
   
   output$fundamental_plot_four <- renderPlot({
     
-    heart_dag <- dagify(
-      Heart_attack ~ Cholesterol,
-      Cholesterol ~ Smoking + Age,
-      Smoking ~ Genetics,
-      Cholesterol ~ Genetics,
-      outcome = "Heart_attack"
-    )
-    
-    ggdag(
-      heart_dag,
-      node_size = 20,
-      stylized = TRUE,
-      text_size = 2.5
-    ) + theme_void()
+    tibble(label = c('Cholesterol', 'Age', 'Smokes', 'Genetics', 'Heart\nattack'),
+           x = c(0, 0, -1, -1, 1),
+           y = c(0, 1, -0, -1, 0)) %>% 
+      ggplot(aes(x = x, y = y)) +
+      geom_point(shape = 21, size = 30) +
+      geom_text(aes(label = label)) +
+      geom_segment(data = tibble(x = c(-0.8, -1, -0.8, 0.2, 0), xend = c(-0.2, -1, -0.2, 0.8, 0),
+                                 y = c(-0.8, -0.7, 0, 0, 0.7), yend = c(-0.2, -0.3, 0, 0, 0.3)),
+                   aes(x = x, xend = xend, y = y, yend = yend),
+                   alpha = 0.5, lineend = 'round', linejoin = 'mitre',
+                   size = 1.2,
+                   arrow = arrow(length = unit(0.04, "npc"))) +
+      coord_cartesian(xlim = c(-1.25, 1.25), ylim = c(-1.25, 1.25)) +
+      theme_void()
     
   })
   
   
 # randomization -----------------------------------------------------------
 
+    # initiate list of treatment observations
     selected_points <- reactiveValues(car_names = NULL)
     
     observeEvent(input$randomization_plot_click, {
         
-        # for each click on the plot, add or remove that datapoint from the list
-        #   of selected datapoints
+        # for each click on the plot, add or remove that data point from the list
+        #   of selected data points
         
         tryCatch({
-            event_car <- rownames(nearPoints(mtcars, input$randomization_plot_click, threshold = 8))[1]
+            event_car <- rownames(nearPoints(master_df, input$randomization_plot_click, threshold = 15, maxpoints = 1))
             if (event_car %in% selected_points$car_names){
               # remove point from selected list  
               selected_points$car_names <- setdiff(selected_points$car_names, event_car)
-            } else if (event_car %in% rownames(mtcars)) {
+            } else if (event_car %in% rownames(master_df)) {
               # add point to selected list  
               selected_points$car_names <- c(selected_points$car_names, event_car)
               # remove floating UI box
@@ -99,7 +110,7 @@ shinyServer(function(input, output) {
     
     # randomize assignment when user clicks button
     observeEvent(input$randomize_button, {
-        selected_points$car_names <- sample(rownames(mtcars), size = nrow(mtcars)/2)
+        selected_points$car_names <- sample(rownames(master_df), size = round(nrow(master_df)/2))
     })
 
     # remove assignment when user clicks button    
@@ -109,7 +120,7 @@ shinyServer(function(input, output) {
     
     # top plot    
     output$randomization_plot <- renderPlot({
-      mtcars %>%
+      master_df %>%
         dplyr::select(-treat) %>%
         rownames_to_column() %>% 
         mutate(Group = if_else(rowname %in% selected_points$car_names,
@@ -122,7 +133,7 @@ shinyServer(function(input, output) {
     
     # bottom plot
     output$randomization_tc_plot <- renderPlot({
-      mtcars %>%
+      master_df %>%
         dplyr::select(-treat) %>%
         rownames_to_column() %>%
         mutate(Group = if_else(rowname %in% selected_points$car_names,
@@ -130,12 +141,14 @@ shinyServer(function(input, output) {
         pivot_longer(cols = where(is.numeric)) %>%
         ggplot(aes(x = value, group = Group, fill = Group)) +
         geom_density(alpha = 0.5) +
-        facet_wrap(~name, scales = 'free') +
+        scale_y_continuous(labels = NULL) +
+        facet_wrap(~name, scales = 'free', ncol = 3) +
         labs(title = "Univariate densities of the observed and unobserved variables",
              x = NULL,
              y = NULL) +
         theme(legend.position = 'none')
     })
+    
 
 # difference in means -----------------------------------------------------
 
@@ -156,8 +169,6 @@ shinyServer(function(input, output) {
         return(tibble(x = pre_test_scores, y_0, y_1, z, Y))
     })
     
-
-    
     # summary output
     output$means_summary <- renderText({
         
@@ -172,7 +183,7 @@ shinyServer(function(input, output) {
                "Estimated SATE from regression: ", reg)
     })  
         
-    output$means_plot_ATE <- renderPlotly({
+    output$means_plot_SATE <- renderPlotly({
         # DGP() %>% 
         #     pivot_longer(cols = c('y_0', 'y_1')) %>% 
         #     ggplot(aes(x = x, y = value, group = name, color = name)) +
@@ -250,9 +261,10 @@ shinyServer(function(input, output) {
         pivot_longer(cols = c('y_0', 'y_1'))
       
       # create second frame that removes the unobserved
-      second_frame <- base_data %>%
-        mutate(frame = 2) %>%
-        filter((z == 0 & name == 'y_0') | (z == 1 & name == "y_1"))
+      second_frame <- base_data
+      second_frame$frame <- 2
+      # second_frame[(second_frame$z == 0 & second_frame$name == 'y_0') | (second_frame$z == 1 & second_frame$name == "y_1")] <-
+        
       
       # create second frame by summarize the y axis
       mean_y <- second_frame %>%
@@ -268,7 +280,8 @@ shinyServer(function(input, output) {
       
       # build the plot
       anim_plot <- base_data %>%
-        bind_rows(second_frame, mean_y, mean_x) %>%
+        bind_rows(mean_y, mean_x) %>%
+        # bind_rows(second_frame, mean_y, mean_x) %>%
         ggplot() +
         geom_point(aes(
           frame = frame,
@@ -307,66 +320,145 @@ shinyServer(function(input, output) {
 
 # propensity scores -------------------------------------------------------
 
-    output$propensity_plot <- renderPlot({
+    # update formula so user can see formula for determine propensity score
+    observeEvent(input$propensity_select_covariates, {
+      output$propensity_select_treat_formula <- renderText({
         
-        # fit model
-        user_formula <- reformulate(input$propensity_select_independent, 'treat')
-            
-        if (input$propensity_select_model == "Binomial - logit"){
-            model <- glm(user_formula, family = binomial('logit'), data = mtcars)
-        } else if (input$propensity_select_model == "Binomial - probit"){
-            model <- glm(user_formula,  family = binomial('probit'), data = mtcars)
-        } else if (input$propensity_select_model == "GAM"){
-            model <- gam::gam(user_formula, data = mtcars)
-        } else stop("No model selected")
+        validate(
+          need(length(input$propensity_select_covariates) > 0, 
+               "Please enter at least one covariate")
+        )
         
-        # get propensity scores
-        propensity_scores <- predict(model, type = 'response')
+        # get user input covariates and remove last '+'
+        covs <- paste0('scale(', paste0(input$propensity_select_covariates, collapse = ") + scale("), ')')
         
-        # perform matching
-        if (input$propensity_replacement_type_input == 'With'){
-            
-            # matching with replacement
-            matches_with <- arm::matching(z = mtcars$treat, score = propensity_scores, replace = TRUE)
-            
-            # df of matches
-            matches <- matches_with$pairs %>% 
-                as_tibble() %>% 
-                rename(index = V1, match = V2)
-            
-        } else {
-            # matching without replacement
-            matches_wo <- arm::matching(z = mtcars$treat, score = propensity_scores, replace = FALSE)
-            
-            # df of matches
-            matches <- matches_wo %>% 
-                as_tibble() %>% 
-                mutate(index = row_number()) %>% 
-                .[mtcars$treat == 1,] %>% 
-                dplyr::select(index, match = matched)
-        }
+        return(c('treat ~ ', covs))
+      })
+    })
+    
+    treat <- eventReactive(input$propensity_button_set_treat, {
+      # replace treatment vector with a new one derived from users inputs
+      if (input$propensity_select_method == 'Dependent on covariates'){
         
-        # df of propensity scores
-        scores <- tibble(Z = mtcars$treat,
-                         score = propensity_scores,
-                         index = 1:nrow(mtcars))
+        validate(
+          need(length(input$propensity_select_covariates) > 0, 
+               "Please enter at least one covariate")
+        )
         
-        # plot
-        scores %>%
-            left_join(matches,
-                      by = 'index') %>%
-            left_join(scores %>%
-                          dplyr::select(score_match = score,
-                                        match = index),
-                      by = 'match') %>% 
+        # set probability of treatment as linear sum of scaled covariates
+        probs <- master_df %>%
+          select(all_of(input$propensity_select_covariates)) %>%
+          mutate_all(scale) %>% 
+          rowSums() %>%
+          as.vector()
+        
+        # scale probs b/t 0:1
+        probs <- (probs - min(probs)) / (max(probs) - min(probs))
+        
+        # calculate treatment
+        treat <- rbinom(
+          n = nrow(master_df),
+          size = 1,
+          prob = probs
+        )
+      } else {
+        # random
+        treat <- rbinom(nrow(master_df), size = 1, prob = 0.5)
+      }
+      
+      return(treat)
+    })
+
+    p_scores <- reactive({
+      # calculate propensity scores based on user input
+      
+      # update treatment assignment based on user inputs
+      master_df$treat <- treat()
+      
+      # fit model
+      user_formula <- reformulate(input$propensity_select_independent,
+                                  response = 'treat', intercept = TRUE)
+      
+      if (input$propensity_select_model == "Binomial - logit") {
+        model <- glm(user_formula, family = binomial('logit'), data = master_df)
+      } else if (input$propensity_select_model == "Binomial - probit") {
+        model <- glm(user_formula, family = binomial('probit'), data = master_df)
+      } else if (input$propensity_select_model == "GAM") {
+        model <- gam::gam(user_formula, data = master_df)
+      } else stop("No model selected")
+      
+      # get propensity scores
+      propensity_scores <- predict(model, type = 'response')
+      
+      # perform matching
+      if (input$propensity_replacement_type_input == 'With') {
+        # matching with replacement
+        matches_with <- arm::matching(z = master_df$treat, 
+                                      score = propensity_scores,
+                                      replace = TRUE)
+        
+        # df of matches
+        matches <- matches_with$pairs %>%
+          as_tibble() %>%
+          rename(index = V1, match = V2)
+        
+      } else {
+        # matching without replacement
+        matches_wo <- arm::matching(z = master_df$treat,
+                                    score = propensity_scores,
+                                    replace = FALSE)
+        
+        # df of matches
+        matches <- matches_wo %>%
+          as_tibble() %>%
+          mutate(index = row_number()) %>%
+          .[master_df$treat == 1, ] %>%
+          dplyr::select(index, match = matched)
+      }
+      
+      # df of propensity scores
+      scores <- tibble(Z = master_df$treat,
+                       score = propensity_scores,
+                       index = 1:nrow(master_df))
+      
+      # combine with matches
+      scores <- scores %>%
+        left_join(matches, by = 'index') %>%
+        left_join(scores %>% dplyr::select(score_match = score, match = index),
+                  by = 'match')
+      
+      return(scores)
+      
+    })
+
+    # plot of propensity score densities grouped by treatment status
+    output$propensity_plot_scores <- renderPlot({
+      
+      p_scores() %>%
+        mutate(Z = recode(Z, `1` = 'Treatment', `0` = "Control")) %>%
+        ggplot(aes(x = score, fill = Z, group = Z)) +
+        geom_density(alpha = 0.7) +
+        labs(title = 'Unequal distributions indicate observations in one group may have higher probability of being selected into treatment',
+             x = 'Propensity score',
+             y = NULL) +
+        theme(legend.title = element_blank())
+      
+    })
+    
+    # plot of propensity score with arrows indicating match b/t treatment and control
+    output$propensity_plot_matching <- renderPlot({
+
+        p_scores() %>%
             mutate(Z = recode(Z, `1` = 'Treatment', `0` = "Control")) %>% 
             ggplot(aes(x = score, y = Z)) +
             geom_point(alpha = 0.5) +
             geom_segment(aes(x = score, xend = score_match,
                              y = 'Treatment', yend = 'Control'),
-                         alpha = 0.5,
-                         arrow = arrow(length = unit(0.03, "npc"))) +
-            labs(x = 'Propensity score',
+                         alpha = 0.5, lineend = 'round', linejoin = 'mitre',
+                         size = 1.2,
+                         arrow = arrow(length = unit(0.04, "npc"))) +
+            labs(title = 'The arrows show how the treatment observations are matched to the control observations',
+                 x = 'Propensity score',
                  y = NULL)
 
     })
