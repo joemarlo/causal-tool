@@ -45,20 +45,26 @@ shinyServer(function(input, output) {
   
   output$fundamental_plot_three <- renderPlot({
     
-    tibble(label = c('Person', 'Smoke', 'Heart\nattack', 'Does not\nsmokes', 'No heart\n attack'),
-           x = c(0, -1, -1, 1, 1),
-           y = c(0, -1, -2, -1, -2)) %>% 
+    tibble(label = c('Smokes', 'Heart\nattack', 'Does not\nsmoke', 'No heart\n attack'),
+           x = c(-1, -1, 1, 1),
+           y = c(-1, -2, -1, -2)) %>% 
       ggplot(aes(x = x, y = y)) +
       geom_point(shape = 21, size = 30) +
       geom_text(aes(label = label)) +
-      geom_segment(data = tibble(x = c(-0.2, 0.2, -1, 1), xend = c(-0.8, 0.8, -1, 1),
-                                 y = c(-0.2, -0.2, -1.3, -1.3), yend = c(-0.8, -0.8, -1.7, -1.7)),
+      geom_segment(data = tibble(x = c(-1, 1), xend = c(-1, 1),
+                                 y = c(-1.3, -1.3), yend = c(-1.7, -1.7)),
                    aes(x = x, xend = xend, y = y, yend = yend),
                    alpha = 0.5, lineend = 'round', linejoin = 'mitre',
                    size = 1.2,
                    arrow = arrow(length = unit(0.04, "npc"))) +
-      coord_cartesian(xlim = c(-1.25, 1.25), ylim = c(-2.25, 0.25)) +
+      geom_segment(data = tibble(x = 0, xend = 0,
+                                 y = -0.75, yend = -2.25),
+                   aes(x = x, xend = xend, y = y, yend = yend),
+                   alpha = 0.5, linetype = 'dashed', 
+                   lineend = 'round', linejoin = 'mitre', size = 1.2) +
+      coord_cartesian(xlim = c(-1.25, 1.25), ylim = c(-2.3, -0.7)) +
       theme_void()
+  
     
   })
   
@@ -223,13 +229,10 @@ shinyServer(function(input, output) {
       anim_plot <- base_data %>%
         bind_rows(mean_y, mean_x) %>%
         ggplot() +
-        geom_point(aes(
-          frame = frame,
-          x = x,
-          y = value,
-          group = name,
-          color = name
-        ), alpha = 0.3) +
+        geom_point(aes(frame = frame, x = x, y = value, 
+                       group = name, fill = name), 
+                   alpha = 0.3, color = 'grey20', pch = 21, 
+                   stroke = 0.3, alpha = 0.3, size = 2) +
         # geom_errorbar(data = diff,
         #               aes(frame = frame, x = x_diff_y_0,
         #                   ymin = y_diff_y_0, ymax = y_diff_y_1),
@@ -283,13 +286,10 @@ shinyServer(function(input, output) {
         bind_rows(mean_y, mean_x) %>%
         # bind_rows(second_frame, mean_y, mean_x) %>%
         ggplot() +
-        geom_point(aes(
-          frame = frame,
-          x = x,
-          y = value,
-          group = name,
-          color = name
-        ), alpha = 0.3) +
+        geom_point(aes(frame = frame, x = x, y = value, 
+                       group = name, fill = name), 
+                   alpha = 0.3, color = 'grey20', pch = 21, 
+                   stroke = 0.3, alpha = 0.3, size = 2) +
         labs(x = 'x',
              y = 'y')
       
@@ -431,13 +431,32 @@ shinyServer(function(input, output) {
       
     })
 
+    # set list to hold user drawn rectangle data
+    user_drawn_rectangle <-
+      reactiveValues(data = data.frame(
+        box_id = numeric(),
+        xmin = numeric(), ymin = numeric(),
+        xmax = numeric(), ymax = numeric()
+      ))
+    
+    observe({
+      # capture the user drawn rectangle
+      e <- input$propensity_plot_scores_brush
+      if (!is.null(e)) {
+        user_drawn_rectangle$data <- data.frame(xmin = e$xmin, ymin = e$ymin, xmax = e$xmax, ymax = e$ymax)
+      }
+    })
+    
     # plot of propensity score densities grouped by treatment status
     output$propensity_plot_scores <- renderPlot({
       
       p_scores() %>%
         mutate(Z = recode(Z, `1` = 'Treatment', `0` = "Control")) %>%
-        ggplot(aes(x = score, fill = Z, group = Z)) +
-        geom_density(alpha = 0.7) +
+        ggplot() +
+        geom_density(aes(x = score, fill = Z, group = Z), alpha = 0.7) +
+        geom_rect(data = user_drawn_rectangle$data, 
+                  aes(xmin = xmin, ymin = ymin, xmax = xmax, ymax = ymax), 
+                  color = "red", fill = NA) +
         labs(title = 'Unequal distributions indicate observations in one group may have higher probability of being selected into treatment',
              x = 'Propensity score',
              y = NULL) +
@@ -463,4 +482,131 @@ shinyServer(function(input, output) {
 
     })
 
+
+# regression discontinuity ------------------------------------------------
+
+    disc_data <- reactive({
+
+      # the data generating process for regression discontinuity
+      # currently just a difference in linear models
+      
+      cutoff <- input$disc_numeric_cutoff
+      tau <- input$disc_numeric_tau
+      n <- input$disc_numeric_n
+      
+      # DGP
+      age <- rnorm(n, 50, 12)
+      eligible <- (age > cutoff)
+      
+      if (input$disc_select_DGP == 'Linear'){
+        y_0 <- age + 0 + rnorm(n, 0, 5)
+        y_1 <- age + tau + rnorm(n, 0, 5)
+      }
+      
+      # TODO fix these polynomials. Maybe also split user input to control and treatment?
+      if (input$disc_select_DGP == 'Polynomial - second order'){
+        y_0 <- 10 + 0.5 * (age) + 0.05 * (age)^2 + rnorm(n, 0, 1)
+        y_1 <- 10 + tau + 0.5 * (age) + 0.05 * (age)^2 + rnorm(n, 0, 1)
+      }
+      
+      if (input$disc_select_DGP == 'Polynomial - third order'){
+        y_0 <- age + (0.05 * age^2) + (0.05 * age^3) + 0 + rnorm(n, 0, 40)
+        y_1 <- age + (0.05 * age^2) + (0.05 * age^3) + tau + rnorm(n, 0, 40)
+      }
+      
+      # scale the numbers between 0 and 30
+      x <- c(y_0, y_1)
+      scaled <- ((x - min(x)) / (max(x) - min(x))) * 100
+      rm(x)
+      y_0 <- scaled[0:length(y_0)]
+      y_1 <- scaled[(length(y_0)+1):(length(y_0) + length(y_1))]
+      
+      mean(y_1 - y_0)
+      range(c(y_0, y_1))
+      plot(age, y_0, ylab = "y")
+      points(age, y_1, col = 'red')
+      
+      full <- data.frame(age, y_0, y_1)
+      obs <- data.frame(age, eligible, y = y_0 * (eligible == 0) + y_1 * eligible)
+      
+      return(list('full' = full, 'observed' = obs))
+    })
+      
+    # plot output with dynamic regression for discontinuity
+    output$disc_plot <- renderPlot({
+
+      cutoff <- input$disc_numeric_cutoff 
+      min_age <- cutoff - (input$disc_numeric_window / 2)
+      max_age <- cutoff + (input$disc_numeric_window / 2)
+      
+      data_obs <- disc_data()[['observed']]
+      dat_cut <- data_obs[data_obs$age >= min_age & data_obs$age <= max_age,]
+      
+      p <- data_obs %>% 
+        ggplot(aes(x = age, y = y, fill = as.logical(eligible))) +
+        geom_point(color = 'grey40', pch = 21, stroke = 1, alpha = 0.3, size = 3) +
+        coord_cartesian(xlim = c(10, 90), ylim = c(0, 100)) +
+        labs(title = "The observable data from the researcher's perspective",
+             x = "Age",
+             y = "Health",
+             fill = "Eligibility")
+      
+      if (input$disc_select_model == 'Linear'){
+        p <- p +
+          geom_smooth(data = dat_cut, color = 'grey10', method = 'lm')
+      }
+      
+      if (input$disc_select_model == 'Polynomial - second order'){
+        p <- p +
+          geom_smooth(data = dat_cut, color = 'grey10',
+                      method = 'lm', formula = y ~ poly(x, 2, raw = TRUE))
+      }
+      
+      if (input$disc_select_model == 'Polynomial - third order'){
+        p <- p +
+          geom_smooth(data = dat_cut, color = 'grey10',
+                      method = 'lm', formula = y ~ poly(x, 3, raw = TRUE))
+      }
+      
+      return(p)
+    })
+
+    # the table of regression estimates
+    output$disc_table <- renderTable({
+      
+      data <- disc_data()
+      # data_full <- data[['full']]
+      data_obs <- data[['observed']]
+    
+      cutoff <- input$disc_numeric_cutoff 
+      min_age <- cutoff - (input$disc_numeric_window / 2)
+      max_age <- cutoff + (input$disc_numeric_window / 2)
+
+      model_A_lm_all <- lm(y ~ age + eligible, data = data_obs)
+      model_A_int_all <- lm(y ~ age * eligible, data = data_obs)
+      model_A_quad_all <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_obs)
+  
+      model_A_lm <- lm(y ~ age + eligible, data = data_obs[data_obs$age >= min_age & data_obs$age <= max_age,])
+      model_A_int <- lm(y ~ age * eligible, data = data_obs[data_obs$age >= min_age & data_obs$age <= max_age,])
+      model_A_quad <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_obs[data_obs$age >= min_age & data_obs$age <= max_age,])
+  
+      # TODO make sure these estimates match the possible user-input relationship types
+      estimates <- tibble(Model = c("Linear model", "Linear model w/interaction", 'Quadratic model'), #cubic
+                 `All observable data` = c(coef(model_A_lm_all)[['eligibleTRUE']],
+                           coef(model_A_int_all)[['eligibleTRUE']] 
+                           + (cutoff * coef(model_A_int_all)[['age:eligibleTRUE']]),
+                           coef(model_A_quad_all)[['eligibleTRUE']]
+                           + (cutoff * coef(model_A_quad_all)[['age:eligibleTRUE']])
+                           + (cutoff^2 * coef(model_A_quad_all)[['eligibleTRUE:I(age^2)']])),
+                 `Data within window` = c(coef(model_A_lm)[['eligibleTRUE']],
+                                  coef(model_A_int)[['eligibleTRUE']] 
+                                  + (cutoff * coef(model_A_int)[['age:eligibleTRUE']]),
+                                  coef(model_A_quad)[['eligibleTRUE']]
+                                  + (cutoff * coef(model_A_quad)[['age:eligibleTRUE']])
+                                  + (cutoff^2 * coef(model_A_quad)[['eligibleTRUE:I(age^2)']])))
+    
+    return(estimates)
+    
+    })
+    
 })

@@ -20,8 +20,8 @@ shinyUI(fluidPage(
     br(),
     
     navbarPage(
-            title = NULL,
-            id = "nav",
+        title = NULL,
+        id = "nav",
         
         # welcome page ------------------------------------------------------------
         
@@ -39,8 +39,8 @@ shinyUI(fluidPage(
                               sidebarPanel(
                                 width = 4,
                                 h3("What is the fundamental problem of causal inference?"),
-                                h5("Causal inference is a missing data problem. We can only observe one potential outcome. We either see the that the person receives the treatment or doesn't receive the treatment."),
-                                h5("For example, if a person smokes, will they have a heart attack? Consider the graph to the right."),
+                                h5("Causal inference is fundamentally a missing data problem. We can only observe one potential outcome. We see that the person either receives the treatment or doesn't receive the treatment."),
+                                h5("For example, if a person smokes, will they have a heart attack?"),
                               ),
                               mainPanel(width = 6,
                                         plotOutput("fundamental_plot_one"))
@@ -50,8 +50,6 @@ shinyUI(fluidPage(
                               sidebarPanel(
                                 width = 4,
                                 h3("What is the fundamental problem of causal inference?"),
-                                h5("Causal inference is a missing data problem. We can only observe one potential outcome. We either see the that the person receives the treatment or doesn't receive the treatment."),
-                                h5("For example, if a person smokes, will they have a heart attack? Consider the graph to the right."),
                                 h5("But what if they didn't smoke, would they still have a heart attack?"),
                               ),
                               mainPanel(width = 6,
@@ -62,10 +60,7 @@ shinyUI(fluidPage(
                               sidebarPanel(
                                 width = 4,
                                 h3("What is the fundamental problem of causal inference?"),
-                                h5("Causal inference is a missing data problem. We can only observe one potential outcome. We either see the that the person receives the treatment or doesn't receive the treatment."),
-                                h5("For example, if a person smokes, will they have a heart attack? Consider the graph to the right."),
-                                h5("But what if they didn't smoke, would they still have a heart attack?"),
-                                h5("Seeing both outcomes, heart attack and no heart attack, is impossible.")
+                                h5("Seeing both outcomes, heart attack and no heart attack, is impossible. This is the observed outcome and one potential counterfactual.")
                               ),
                               mainPanel(width = 6,
                                         plotOutput("fundamental_plot_three"))
@@ -75,11 +70,7 @@ shinyUI(fluidPage(
                               sidebarPanel(
                                 width = 4,
                                 h3("What is the fundamental problem of causal inference?"),
-                                h5("Causal inference is a missing data problem. We can only observe one potential outcome. We either see the that the person receives the treatment or doesn't receive the treatment."),
-                                h5("For example, if a person smokes, will they have a heart attack? Consider the graph to the right."),
-                                h5("But what if they didn't smoke, would they still have a heart attack?"),
-                                h5("Seeing both outcomes, heart attack and no heart attack, is impossible."),
-                                h5("And there may be [latent] and [confounding] variables.")
+                                h5("And, in many cases, there are confounding and latent variables that further complicate the ability to draw inference.")
                               ),
                               mainPanel(width = 6,
                                         plotOutput("fundamental_plot_four"))
@@ -120,7 +111,7 @@ shinyUI(fluidPage(
                                       label = "Reset the treatment assignment"),
                          br(), br(),
                          HTML('<details><summary>What is this data?</summary>'),
-                         HTML('The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models). <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/mtcars.html">See here for more information.</a'),
+                         HTML('The data are simulated. The correlations may seem reasonable but do not make any material conclusions from the data.</a'),
                          HTML('</details><br>')
                      ),
                      mainPanel(
@@ -246,7 +237,8 @@ shinyUI(fluidPage(
                              tabPanel("Propensity scores",
                                       # tableOutput('p_score_table')),
                                       br(),
-                                      plotOutput('propensity_plot_scores')),
+                                      plotOutput('propensity_plot_scores',
+                                                 brush = 'propensity_plot_scores_brush')),
                              tabPanel("Matching",
                                       br(),
                                       plotOutput("propensity_plot_matching", height = 300)
@@ -266,8 +258,60 @@ shinyUI(fluidPage(
         # tabPanel(title = "Matching"),
         
         # matching page -----------------------------------------------------------
-        
-        tabPanel(title = "Regression discontinuity")
-        
-    )
-))
+
+        tabPanel(title = "Regression discontinuity",
+                 sidebarLayout(
+                     sidebarPanel(
+                         width = 4,
+                         h3("Regression discontinuity"),
+                         h5("Explain regression discontinuity design ...."),
+                         br(),
+                         selectInput(inputId = "disc_select_DGP",
+                                     label = "Set the true relationship:",
+                                     choices = c("Linear", "Polynomial - second order", "Polynomial - third order"),
+                                     selected = "Linear",
+                                     multiple = FALSE),
+                         selectInput(inputId = "disc_select_model",
+                                     label = "Set the modeled relationship:",
+                                     choices = c("Linear", "Polynomial - second order", "Polynomial - third order"),
+                                     selected = "Linear",
+                                     multiple = FALSE),
+                         numericInput(inputId = "disc_numeric_tau",
+                                      label = "Set the true difference (tau):",
+                                      min = 0, 
+                                      max = 20, 
+                                      step = 1,
+                                      value = 5),
+                         numericInput(inputId = "disc_numeric_cutoff",
+                                      label = "Set the cutoff age:",
+                                      min = 30, 
+                                      max = 70, 
+                                      step = 1,
+                                      value = 50),
+                         numericInput(inputId = 'disc_numeric_window',
+                                      label = 'Set the width of the window around the cutoff',
+                                      min = 1,
+                                      max = 40,
+                                      value = 10),
+                         numericInput(inputId = "disc_numeric_n",
+                                      label = "n:",
+                                      min = 100, 
+                                      max = 5000, 
+                                      step = 100,
+                                      value = 500),
+                         strong("Estimates from regression:"),
+                         tableOutput('disc_table')
+                         ),
+                     mainPanel(
+                         width = 6,
+                         tabsetPanel(
+                             id = 'disc_tabs',
+                             type = 'tabs',
+                             tabPanel("plot",
+                                      br(),
+                                      plotOutput("disc_plot", height = 500))
+                         )
+                        )
+                     )
+                 )
+)))
