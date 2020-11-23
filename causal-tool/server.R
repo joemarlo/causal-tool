@@ -366,6 +366,9 @@ shinyServer(function(input, output) {
       
       return(treat)
     })
+    
+    # initiate treat() vector by simulating button click
+    shinyjs::click("propensity_button_set_treat")
 
     p_scores <- reactive({
       # calculate propensity scores based on user input
@@ -487,22 +490,29 @@ shinyServer(function(input, output) {
     observeEvent(input$disc_select_DGP, {
       output$disc_select_DGP_formula <- renderText({
 
+        n <- input$disc_numeric_n
         tau <- input$disc_numeric_tau
         e <- input$disc_slider_error
         cutoff <- input$disc_numeric_cutoff
+        slope <- input$disc_slider_slope
+        slope_correction <- 50 - (50 * slope)
                 
         if (input$disc_select_DGP == 'Linear'){
           text <- paste0(
+            'n = ', n,
+            '<br>',
             'age = rnorm(n, 50, 12)',
             '<br>',
             'eligibility = (age > ', cutoff, ')',
             '<br>',
-            'y_0 = age + 0 + rnorm(n, 0, ', e, ')',
+            'y_0 = ', slope_correction, ' + ', slope, ' * age + rnorm(n, 0, ', e, ')',
             '<br>',
-            'y_1 = age + ', tau, ' + rnorm(n, 0, ', e, ')'
+            'y_1 = ', slope_correction, ' + ', tau, ' + ', slope, ' + age + rnorm(n, 0, ', e, ')'
           )
         } else if (input$disc_select_DGP == 'Polynomial - second order'){
           text <- paste0(
+            'n = ', n,
+            '<br>',
             'age = rnorm(n, 50, 12)',
             '<br>',
             'eligibility = (age > ', cutoff, ')',
@@ -512,11 +522,9 @@ shinyServer(function(input, output) {
             'y_1 = 30 + ', tau, ' + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, 0, ', e, ')'
           )
         } else if (input$disc_select_DGP == 'Polynomial - third order'){
-          age <- rnorm(n, 50, 18)
-          y_0 <- 35 + 0 + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, 0, e)
-          y_1 <- 35 + tau + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, 0, e)
-          
           text <- paste0(
+            'n = ', n,
+            '<br>',
             'age = rnorm(n, 50, 18)',
             '<br>',
             'eligibility = (age > ', cutoff, ')',
@@ -541,6 +549,11 @@ shinyServer(function(input, output) {
       tau <- input$disc_numeric_tau
       n <- input$disc_numeric_n
       e <- input$disc_slider_error
+      slope <- input$disc_slider_slope
+      
+      # if slope is reduced from 1 then the y values are reduced
+      # this adds a correction so they still plot in roughly the same area
+      slope_correction <- 50 - (50 * slope)
       
       # generate age and elgibility vectors
       age <- rnorm(n, 50, 12)
@@ -548,8 +561,8 @@ shinyServer(function(input, output) {
       
       # generate the data per the user input
       if (input$disc_select_DGP == 'Linear'){
-        y_0 <- age + 0 + rnorm(n, 0, e)
-        y_1 <- age + tau + rnorm(n, 0, e)
+        y_0 <- 0 + (slope * age) + rnorm(n, 0, e) + slope_correction
+        y_1 <- 0 + tau + (slope * age) + rnorm(n, 0, e) + slope_correction
       } else if (input$disc_select_DGP == 'Polynomial - second order'){
         y_0 <- 30 + 0 + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, 0, e)
         y_1 <- 30 + tau + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, 0, e)
@@ -605,11 +618,11 @@ shinyServer(function(input, output) {
              x = "Age",
              y = "Health",
              fill = "Eligibility")
-      
+        
       # add regression lines per user input
       if (input$disc_select_model == 'Linear'){
         p <- p +
-          geom_smooth(data = dat_cut, color = 'grey10', 
+          geom_smooth(data = dat_cut, color = 'grey10',
                       method = 'lm', formula = y ~ x)
       } else if (input$disc_select_model == 'Polynomial - second order'){
         p <- p +
@@ -668,25 +681,23 @@ shinyServer(function(input, output) {
     })
 
     # the table of regression estimates
-    output$disc_table <- renderTable({
+    output$disc_table <- renderText({
       
       data <- disc_data()
       data_full <- data[['full']]
       data_obs <- data[['observed']]
-    
+
       cutoff <- input$disc_numeric_cutoff 
       min_age <- cutoff - (input$disc_numeric_window / 2)
       max_age <- cutoff + (input$disc_numeric_window / 2)
-
+      data_window <- data_obs[data_obs$age >= min_age & data_obs$age <= max_age,]
+      
       # all observable data within the window
-      model_A_lm <- lm(y ~ age + eligible, 
-                       data = data_obs[data_obs$age >= min_age & data_obs$age <= max_age,])
-      model_A_int <- lm(y ~ age * eligible, 
-                        data = data_obs[data_obs$age >= min_age & data_obs$age <= max_age,])
-      model_A_quad <- lm(y ~ age * eligible + I(age^2) * eligible, 
-                         data = data_obs[data_obs$age >= min_age & data_obs$age <= max_age,])
+      model_A_lm <- lm(y ~ age + eligible,  data = data_window)
+      model_A_int <- lm(y ~ age * eligible, data = data_window)
+      model_A_quad <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_window)
       model_A_cubic <- lm(y ~ age * eligible + I(age^2) * eligible + I(age^3) * eligible, 
-                          data = data_obs[data_obs$age >= min_age & data_obs$age <= max_age,])
+                          data = data_window)
       
       # all observable data
       model_A_lm_all <- lm(y ~ age + eligible, data = data_obs)
@@ -702,8 +713,8 @@ shinyServer(function(input, output) {
       # TODO make sure these estimates match the possible user-input relationship types
       # add 'all data' god-view column
       estimates <- tibble(
-        Model = c("Linear model", "Linear model w/interaction", 'Quadratic model', 'Cubic model'), #cubic
-        `Data within window` = c(coef(model_A_lm)[['eligibleTRUE']],
+        Model = c("Linear model", "Linear model w/interaction", 'Quadratic model', 'Cubic model', 'Difference in means'), #cubic
+        `Data within bandwidth` = c(coef(model_A_lm)[['eligibleTRUE']],
                                  coef(model_A_int)[['eligibleTRUE']] 
                                   + (cutoff * coef(model_A_int)[['age:eligibleTRUE']]),
                                  coef(model_A_quad)[['eligibleTRUE']]
@@ -712,8 +723,9 @@ shinyServer(function(input, output) {
                                  coef(model_A_cubic)[['eligibleTRUE']]
                                   + (cutoff * coef(model_A_cubic)[['age:eligibleTRUE']])
                                   + (cutoff^2 * coef(model_A_cubic)[['eligibleTRUE:I(age^2)']])
-                                  + (cutoff^3 * coef(model_A_cubic)[['eligibleTRUE:I(age^3)']])),
-        `All observable data` = c(coef(model_A_lm_all)[['eligibleTRUE']],
+                                  + (cutoff^3 * coef(model_A_cubic)[['eligibleTRUE:I(age^3)']]),
+                                 diff(tapply(data_window$y, INDEX = data_window$eligible, FUN = mean))),
+        `All observable` = c(coef(model_A_lm_all)[['eligibleTRUE']],
                                   coef(model_A_int_all)[['eligibleTRUE']] 
                                     + (cutoff * coef(model_A_int_all)[['age:eligibleTRUE']]),
                                   coef(model_A_quad_all)[['eligibleTRUE']]
@@ -722,9 +734,16 @@ shinyServer(function(input, output) {
                                   coef(model_A_cubic_all)[['eligibleTRUE']]
                                     + (cutoff * coef(model_A_cubic_all)[['age:eligibleTRUE']])
                                     + (cutoff^2 * coef(model_A_cubic_all)[['eligibleTRUE:I(age^2)']])
-                                    + (cutoff^3 * coef(model_A_cubic_all)[['eligibleTRUE:I(age^3)']])),
-        `All data` = c('TBD', 'TBD', 'TBD', 'TBD'))
-    
+                                    + (cutoff^3 * coef(model_A_cubic_all)[['eligibleTRUE:I(age^3)']]),
+                                  diff(tapply(data_obs$y, INDEX = data_obs$eligible, FUN = mean))),
+        ` ` = c(rep(NA, 4),
+                       mean(data_full$y_1 - data_full$y_0))) %>% 
+        knitr::kable(digits = 2, format = 'html') %>% 
+        kableExtra::add_header_above(c("", "Observable data" = 2, 'All data' = 1)) %>% 
+        kableExtra::kable_styling(
+          bootstrap_options = c("striped", "hover", "condensed")
+        )
+
     return(estimates)
     
     })
