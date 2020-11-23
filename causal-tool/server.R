@@ -163,8 +163,8 @@ shinyServer(function(input, output) {
         set.seed(1234)
         N <- input$means_select_n
         pre_test_scores <- rnorm(N, 65, 3)
-        y_0 <- 10 + input$means_select_slope * pre_test_scores + 0 + rnorm(N, 0, 1)
-        y_1 <- 10 + input$means_select_slope * pre_test_scores + input$means_select_tau + rnorm(N, 0, 1)
+        y_0 <- 10 + input$means_select_slope * pre_test_scores + 0 + rnorm(N, 0, input$means_slider_error)
+        y_1 <- 10 + input$means_select_slope * pre_test_scores + input$means_select_tau + rnorm(N, 0, input$means_slider_error)
         
         # randomly assign treatment
         z <- rbinom(n = N, 1, p = 0.5)
@@ -315,8 +315,6 @@ shinyServer(function(input, output) {
         geom_smooth(method = 'lm', formula = y ~ x)
     })
   
-    
-    
 
 # propensity scores -------------------------------------------------------
 
@@ -485,55 +483,101 @@ shinyServer(function(input, output) {
 
 # regression discontinuity ------------------------------------------------
 
+    # update text so user can see formula for DGP
+    observeEvent(input$disc_select_DGP, {
+      output$disc_select_DGP_formula <- renderText({
+
+        tau <- input$disc_numeric_tau
+        e <- input$disc_slider_error
+        cutoff <- input$disc_numeric_cutoff
+                
+        if (input$disc_select_DGP == 'Linear'){
+          text <- paste0(
+            'age = rnorm(n, 50, 12)',
+            '<br>',
+            'eligibility = (age > ', cutoff, ')',
+            '<br>',
+            'y_0 = age + 0 + rnorm(n, 0, ', e, ')',
+            '<br>',
+            'y_1 = age + ', tau, ' + rnorm(n, 0, ', e, ')'
+          )
+        } else if (input$disc_select_DGP == 'Polynomial - second order'){
+          text <- paste0(
+            'age = rnorm(n, 50, 12)',
+            '<br>',
+            'eligibility = (age > ', cutoff, ')',
+            '<br>',
+            'y_0 = 30 + 0 + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, 0, ', e, ')',
+            '<br>',
+            'y_1 = 30 + ', tau, ' + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, 0, ', e, ')'
+          )
+        } else if (input$disc_select_DGP == 'Polynomial - third order'){
+          age <- rnorm(n, 50, 18)
+          y_0 <- 35 + 0 + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, 0, e)
+          y_1 <- 35 + tau + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, 0, e)
+          
+          text <- paste0(
+            'age = rnorm(n, 50, 18)',
+            '<br>',
+            'eligibility = (age > ', cutoff, ')',
+            '<br>',
+            'y_0 = 35 + 0 + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, 0, ', e, ')',
+            '<br>',
+            'y_1 = 35 + ', tau, ' + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, 0, ', e, ')'
+          )
+          
+        } else {text <- 'No DGP code available'}
+        
+        return(text)
+      })
+    })
+    
     disc_data <- reactive({
 
       # the data generating process for regression discontinuity
-      # currently just a difference in linear models
       
+      # set user inputs
       cutoff <- input$disc_numeric_cutoff
       tau <- input$disc_numeric_tau
       n <- input$disc_numeric_n
+      e <- input$disc_slider_error
       
-      # DGP
+      # generate age and elgibility vectors
       age <- rnorm(n, 50, 12)
       eligible <- (age > cutoff)
       
+      # generate the data per the user input
       if (input$disc_select_DGP == 'Linear'){
-        y_0 <- age + 0 + rnorm(n, 0, 5)
-        y_1 <- age + tau + rnorm(n, 0, 5)
+        y_0 <- age + 0 + rnorm(n, 0, e)
+        y_1 <- age + tau + rnorm(n, 0, e)
+      } else if (input$disc_select_DGP == 'Polynomial - second order'){
+        y_0 <- 30 + 0 + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, 0, e)
+        y_1 <- 30 + tau + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, 0, e)
+      } else if (input$disc_select_DGP == 'Polynomial - third order'){
+        # regenerate a wider age vector b/c the polynomial 'squishs' the data along the x
+        age <- rnorm(n, 50, 18)
+        eligible <- (age > cutoff)
+        y_0 <- 35 + 0 + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, 0, e)
+        y_1 <- 35 + tau + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, 0, e)
       }
       
-      # TODO fix these polynomials. Maybe also split user input to control and treatment?
-      if (input$disc_select_DGP == 'Polynomial - second order'){
-        y_0 <- 10 + 0.5 * (age) + 0.05 * (age)^2 + rnorm(n, 0, 1)
-        y_1 <- 10 + tau + 0.5 * (age) + 0.05 * (age)^2 + rnorm(n, 0, 1)
-      }
+      # scale the numbers between 0 and 100. This may throw off the numbers
+        # a little but ensures everything is within the plot limits
+      # x <- c(y_0, y_1)
+      # scaled <- ((x - min(x)) / (max(x) - min(x))) * 100
+      # rm(x)
+      # y_0 <- scaled[0:length(y_0)]
+      # y_1 <- scaled[(length(y_0)+1):(length(y_0) + length(y_1))]
       
-      if (input$disc_select_DGP == 'Polynomial - third order'){
-        y_0 <- age + (0.05 * age^2) + (0.05 * age^3) + 0 + rnorm(n, 0, 40)
-        y_1 <- age + (0.05 * age^2) + (0.05 * age^3) + tau + rnorm(n, 0, 40)
-      }
-      
-      # scale the numbers between 0 and 30
-      x <- c(y_0, y_1)
-      scaled <- ((x - min(x)) / (max(x) - min(x))) * 100
-      rm(x)
-      y_0 <- scaled[0:length(y_0)]
-      y_1 <- scaled[(length(y_0)+1):(length(y_0) + length(y_1))]
-      
-      mean(y_1 - y_0)
-      range(c(y_0, y_1))
-      plot(age, y_0, ylab = "y")
-      points(age, y_1, col = 'red')
-      
-      full <- data.frame(age, y_0, y_1)
+      # store the results in separate dataframes
+      full <- data.frame(age, eligible, y_0, y_1)
       obs <- data.frame(age, eligible, y = y_0 * (eligible == 0) + y_1 * eligible)
       
       return(list('full' = full, 'observed' = obs))
     })
       
-    # plot output with dynamic regression for discontinuity
-    output$disc_plot <- renderPlot({
+    # observable data only plot
+    output$disc_plot_observable <- renderPlot({
 
       cutoff <- input$disc_numeric_cutoff 
       min_age <- cutoff - (input$disc_numeric_window / 2)
@@ -544,28 +588,80 @@ shinyServer(function(input, output) {
       
       p <- data_obs %>% 
         ggplot(aes(x = age, y = y, fill = as.logical(eligible))) +
+        geom_rect(data = tibble(xmin = min_age, xmax = 0, ymin = 0, ymax = 100),
+                  inherit.aes = FALSE,
+                  aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+                  fill = 'grey70', alpha = 0.4) +
+        geom_rect(data = tibble(xmin = max_age, xmax = 100, ymin = 0, ymax = 100),
+                  inherit.aes = FALSE,
+                  aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+                  fill = 'grey70', alpha = 0.4) +
+        geom_vline(xintercept = input$disc_numeric_cutoff, 
+                   color = 'black', linetype = 'dashed') +
         geom_point(color = 'grey40', pch = 21, stroke = 1, alpha = 0.3, size = 3) +
+        scale_x_continuous(breaks = seq(0, 100, by = 10)) +
         coord_cartesian(xlim = c(10, 90), ylim = c(0, 100)) +
-        labs(title = "The observable data from the researcher's perspective",
+        labs(title = "The researcher's perspective: only the observable data",
              x = "Age",
              y = "Health",
              fill = "Eligibility")
       
+      # add regression lines per user input
       if (input$disc_select_model == 'Linear'){
         p <- p +
-          geom_smooth(data = dat_cut, color = 'grey10', method = 'lm')
-      }
-      
-      if (input$disc_select_model == 'Polynomial - second order'){
+          geom_smooth(data = dat_cut, color = 'grey10', 
+                      method = 'lm', formula = y ~ x)
+      } else if (input$disc_select_model == 'Polynomial - second order'){
         p <- p +
           geom_smooth(data = dat_cut, color = 'grey10',
                       method = 'lm', formula = y ~ poly(x, 2, raw = TRUE))
-      }
-      
-      if (input$disc_select_model == 'Polynomial - third order'){
+      } else if (input$disc_select_model == 'Polynomial - third order'){
         p <- p +
           geom_smooth(data = dat_cut, color = 'grey10',
                       method = 'lm', formula = y ~ poly(x, 3, raw = TRUE))
+      }
+      
+      return(p)
+    })
+    
+    # all-seeing plot
+    output$disc_plot_all <- renderPlot({
+      
+      cutoff <- input$disc_numeric_cutoff 
+      min_age <- cutoff - (input$disc_numeric_window / 2)
+      max_age <- cutoff + (input$disc_numeric_window / 2)
+      
+      data_full <- disc_data()[['full']]
+
+      p <- data_full %>% 
+        pivot_longer(cols = c('y_1', "y_0")) %>% 
+        ggplot(aes(x = age, y = value, fill = name, group = name)) +
+        geom_vline(xintercept = input$disc_numeric_cutoff, 
+                   color = 'black', linetype = 'dashed') +
+        geom_point(color = 'grey40', pch = 21, stroke = 1, alpha = 0.3, size = 3) +
+        scale_x_continuous(breaks = seq(0, 100, by = 10)) +
+        coord_cartesian(xlim = c(10, 90), ylim = c(0, 100)) +
+        labs(title = "An all-seeing entity's perspective: all the data",
+             x = "Age",
+             y = "Health",
+             fill = NULL)
+      
+      # add regression lines per user input
+      if (input$disc_select_model == 'Linear'){
+        p <- p +
+          geom_smooth(color = 'grey10', method = 'lm', formula = y ~ x)
+      }
+
+      if (input$disc_select_model == 'Polynomial - second order'){
+        p <- p +
+          geom_smooth(color = 'grey10', method = 'lm', 
+                      formula = y ~ poly(x, 2, raw = TRUE))
+      }
+
+      if (input$disc_select_model == 'Polynomial - third order'){
+        p <- p +
+          geom_smooth(color = 'grey10', method = 'lm', 
+                      formula = y ~ poly(x, 3, raw = TRUE))
       }
       
       return(p)
@@ -575,35 +671,59 @@ shinyServer(function(input, output) {
     output$disc_table <- renderTable({
       
       data <- disc_data()
-      # data_full <- data[['full']]
+      data_full <- data[['full']]
       data_obs <- data[['observed']]
     
       cutoff <- input$disc_numeric_cutoff 
       min_age <- cutoff - (input$disc_numeric_window / 2)
       max_age <- cutoff + (input$disc_numeric_window / 2)
 
+      # all observable data within the window
+      model_A_lm <- lm(y ~ age + eligible, 
+                       data = data_obs[data_obs$age >= min_age & data_obs$age <= max_age,])
+      model_A_int <- lm(y ~ age * eligible, 
+                        data = data_obs[data_obs$age >= min_age & data_obs$age <= max_age,])
+      model_A_quad <- lm(y ~ age * eligible + I(age^2) * eligible, 
+                         data = data_obs[data_obs$age >= min_age & data_obs$age <= max_age,])
+      model_A_cubic <- lm(y ~ age * eligible + I(age^2) * eligible + I(age^3) * eligible, 
+                          data = data_obs[data_obs$age >= min_age & data_obs$age <= max_age,])
+      
+      # all observable data
       model_A_lm_all <- lm(y ~ age + eligible, data = data_obs)
       model_A_int_all <- lm(y ~ age * eligible, data = data_obs)
       model_A_quad_all <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_obs)
+      model_A_cubic_all <- lm(y ~ age * eligible + I(age^2) * eligible + I(age^3) * eligible, data = data_obs)
   
-      model_A_lm <- lm(y ~ age + eligible, data = data_obs[data_obs$age >= min_age & data_obs$age <= max_age,])
-      model_A_int <- lm(y ~ age * eligible, data = data_obs[data_obs$age >= min_age & data_obs$age <= max_age,])
-      model_A_quad <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_obs[data_obs$age >= min_age & data_obs$age <= max_age,])
-  
+      # all data
+      # model_A_lm_god <- lm(y ~ age + eligible, data = data_full)
+      # model_A_int_god <- lm(y ~ age * eligible, data = data_full)
+      # model_A_quad_god <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_full)
+      
       # TODO make sure these estimates match the possible user-input relationship types
-      estimates <- tibble(Model = c("Linear model", "Linear model w/interaction", 'Quadratic model'), #cubic
-                 `All observable data` = c(coef(model_A_lm_all)[['eligibleTRUE']],
-                           coef(model_A_int_all)[['eligibleTRUE']] 
-                           + (cutoff * coef(model_A_int_all)[['age:eligibleTRUE']]),
-                           coef(model_A_quad_all)[['eligibleTRUE']]
-                           + (cutoff * coef(model_A_quad_all)[['age:eligibleTRUE']])
-                           + (cutoff^2 * coef(model_A_quad_all)[['eligibleTRUE:I(age^2)']])),
-                 `Data within window` = c(coef(model_A_lm)[['eligibleTRUE']],
-                                  coef(model_A_int)[['eligibleTRUE']] 
+      # add 'all data' god-view column
+      estimates <- tibble(
+        Model = c("Linear model", "Linear model w/interaction", 'Quadratic model', 'Cubic model'), #cubic
+        `Data within window` = c(coef(model_A_lm)[['eligibleTRUE']],
+                                 coef(model_A_int)[['eligibleTRUE']] 
                                   + (cutoff * coef(model_A_int)[['age:eligibleTRUE']]),
-                                  coef(model_A_quad)[['eligibleTRUE']]
-                                  + (cutoff * coef(model_A_quad)[['age:eligibleTRUE']])
-                                  + (cutoff^2 * coef(model_A_quad)[['eligibleTRUE:I(age^2)']])))
+                                 coef(model_A_quad)[['eligibleTRUE']]
+                                   + (cutoff * coef(model_A_quad)[['age:eligibleTRUE']])
+                                   + (cutoff^2 * coef(model_A_quad)[['eligibleTRUE:I(age^2)']]),
+                                 coef(model_A_cubic)[['eligibleTRUE']]
+                                  + (cutoff * coef(model_A_cubic)[['age:eligibleTRUE']])
+                                  + (cutoff^2 * coef(model_A_cubic)[['eligibleTRUE:I(age^2)']])
+                                  + (cutoff^3 * coef(model_A_cubic)[['eligibleTRUE:I(age^3)']])),
+        `All observable data` = c(coef(model_A_lm_all)[['eligibleTRUE']],
+                                  coef(model_A_int_all)[['eligibleTRUE']] 
+                                    + (cutoff * coef(model_A_int_all)[['age:eligibleTRUE']]),
+                                  coef(model_A_quad_all)[['eligibleTRUE']]
+                                    + (cutoff * coef(model_A_quad_all)[['age:eligibleTRUE']])
+                                    + (cutoff^2 * coef(model_A_quad_all)[['eligibleTRUE:I(age^2)']]),
+                                  coef(model_A_cubic_all)[['eligibleTRUE']]
+                                    + (cutoff * coef(model_A_cubic_all)[['age:eligibleTRUE']])
+                                    + (cutoff^2 * coef(model_A_cubic_all)[['eligibleTRUE:I(age^2)']])
+                                    + (cutoff^3 * coef(model_A_cubic_all)[['eligibleTRUE:I(age^3)']])),
+        `All data` = c('TBD', 'TBD', 'TBD', 'TBD'))
     
     return(estimates)
     

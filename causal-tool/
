@@ -1,0 +1,1 @@
+y_0 <- age + 0 + rnorm(n, 0, 5)y_1 <- age + tau + rnorm(n, 0, 5)
