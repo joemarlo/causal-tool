@@ -18,17 +18,30 @@ shinyUI(fluidPage(
     
     # initiate shinyjs
     useShinyjs(),
-    
-    br(),
-    
+
     navbarPage(
-        title = NULL,
+        title = 'NYU',
         id = "nav",
         
         # welcome page ------------------------------------------------------------
         
         tabPanel(title = "Welcome",
-                 includeMarkdown("markdowns/welcome_text.md")),
+                 sidebarLayout(
+                     sidebarPanel(
+                         width = 7,
+                         includeMarkdown("markdowns/welcome_text.md")
+                         ),
+                     mainPanel(
+                         width = 5,
+                         plotOutput('welcome_plot', height = 500),
+                         br(),
+                         actionButton(
+                             inputId = 'welcome_button_update_plot',
+                             label = "Refresh plot")
+                     )
+                 )
+        ),
+                 
         
         # fundamental problem of causal inference ---------------------------------
         
@@ -140,45 +153,51 @@ shinyUI(fluidPage(
                          h3("Can we just take the average effect between the treatment and control groups?"),
                          h5("...explain difference in means..."),
                          br(),
-                         h4("Results"),
-                         htmlOutput("means_summary"),
-                         br(),
-                         HTML('<details><summary>More information</summary>'),
-                         h4("Data generation process"),
-                         sliderInput(
-                             inputId = "means_select_n",
-                             label = "n:",
-                             value = 500,
-                             min = 100,
-                             max = 2500,
-                             step = 100
-                         ),
-                         sliderInput(
-                             inputId = "means_select_tau",
-                             label = "Tau:",
-                             value = 5,
-                             min = 0,
-                             max = 100,
-                             step = 1
-                         ),
-                         sliderInput(
-                             inputId = "means_select_slope",
-                             label = "Slope:",
-                             value = 1.1,
-                             min = 0,
-                             max = 10,
-                             step = 0.1
-                         ),
-                         sliderInput(
-                             inputId = "means_slider_error",
-                             label = "Error:",
-                             value = 1,
-                             min = 0,
-                             max = 10,
-                             step = 1
-                         ),
-                         HTML('</details><br>')
-                     ),
+                         tabsetPanel(
+                             id = 'disc_tabs_left',
+                             type = 'tabs',
+                             tabPanel(
+                                 "Results",
+                                 br(),
+                                 htmlOutput("means_summary")
+                                 ),
+                             tabPanel(
+                                 "Data generation process",
+                                 br(),
+                                 sliderInput(
+                                     inputId = "means_select_n",
+                                     label = "n:",
+                                     value = 500,
+                                     min = 100,
+                                     max = 2500,
+                                     step = 100
+                                 ),
+                                 sliderInput(
+                                     inputId = "means_select_tau",
+                                     label = "Tau:",
+                                     value = 5,
+                                     min = 0,
+                                     max = 100,
+                                     step = 1
+                                 ),
+                                 sliderInput(
+                                     inputId = "means_select_slope",
+                                     label = "Slope:",
+                                     value = 1.1,
+                                     min = 0,
+                                     max = 10,
+                                     step = 0.1
+                                 ),
+                                 sliderInput(
+                                     inputId = "means_slider_error",
+                                     label = "Error:",
+                                     value = 1,
+                                     min = 0,
+                                     max = 10,
+                                     step = 1
+                                 )
+                             )
+                     )),
                      mainPanel(
                          width = 6,
                          tabsetPanel(
@@ -206,39 +225,55 @@ shinyUI(fluidPage(
                          h3("Propensity scores are the probability that an observation is assigned to treatment based on the observed covariates"),
                          h5("The scores can reduce selection bias and constrain inference to areas of common support."),
                          h5("In order to illustrate the mechanism, let's first set treatment as either random or a function of the covariates."),
-                         radioButtons(inputId = 'propensity_select_method',
-                                     label = 'Method to determine treatment:',
-                                     choices = c('Random', 'Dependent on covariates'),
-                                     selected = 'Random'),
-                         conditionalPanel(
-                             condition = "input.propensity_select_method == 'Dependent on covariates'",
-                             selectInput(inputId = "propensity_select_covariates",
-                                         label = "Covariates:",
-                                         choices = setdiff(colnames(master_df), "treat"),
-                                         selected = setdiff(colnames(master_df), "treat"),
-                                         multiple = TRUE),
-                             strong("Formula:"),
-                             uiOutput("propensity_select_treat_formula"),
-                             br()
-                         ),
-                         actionButton(inputId = 'propensity_button_set_treat',
-                                      label = 'Set treatment assignment'),
-                         br(), br(),
-                         selectInput(inputId = "propensity_select_model",
-                                     label = "Model family",
-                                     choices = c("Binomial - logit",
-                                                 "Binomial - probit",
-                                                 "GAM"),
-                                     selected = "Binomial - logit"),
-                         selectInput(inputId = "propensity_select_independent",
-                                     label = "Independent variables:",
-                                     choices = setdiff(colnames(master_df), "treat"),
-                                     selected = setdiff(colnames(master_df), "treat"),
-                                     multiple = TRUE),
-                         radioButtons(inputId = "propensity_replacement_type_input",
-                                     label = "Replacement type:",
-                                     choices = c("With", "Without"),
-                                     selected = "With")
+                         br(),
+                         tabsetPanel(
+                             id = 'propensity_tabs_left',
+                             type = 'tabs',
+                             tabPanel(
+                                 "Set treatment",
+                                 br(),
+                                 radioButtons(inputId = 'propensity_select_method',
+                                             label = 'Method to determine treatment:',
+                                             choices = c('Random', 'Dependent on covariates'),
+                                             selected = 'Random'),
+                                 conditionalPanel(
+                                     condition = "input.propensity_select_method == 'Dependent on covariates'",
+                                     selectInput(inputId = "propensity_select_covariates",
+                                                 label = "Covariates:",
+                                                 choices = setdiff(colnames(master_df), "treat"),
+                                                 selected = setdiff(colnames(master_df), "treat"),
+                                                 multiple = TRUE),
+                                     strong("Formula:"),
+                                     uiOutput("propensity_select_treat_formula"),
+                                     br()
+                                 ),
+                                 actionButton(inputId = 'propensity_button_set_treat',
+                                              label = 'Set treatment assignment')
+                                 ),
+                             tabPanel(
+                                 "Propensity method",
+                                 br(),
+                                 selectInput(inputId = "propensity_select_model",
+                                             label = "Model family",
+                                             choices = c("Binomial - logit",
+                                                         "Binomial - probit",
+                                                         "GAM"),
+                                             selected = "Binomial - logit"),
+                                 selectInput(inputId = "propensity_select_independent",
+                                             label = "Independent variables:",
+                                             choices = setdiff(colnames(master_df), "treat"),
+                                             selected = setdiff(colnames(master_df), "treat"),
+                                             multiple = TRUE)
+                             ),
+                             tabPanel(
+                                 'Matching method',
+                                 br(),
+                                 radioButtons(inputId = "propensity_replacement_type_input",
+                                             label = "Replacement type:",
+                                             choices = c("With", "Without"),
+                                             selected = "With")
+                             )
+                         )
                      ),
                      mainPanel(
                          width = 6,
@@ -259,15 +294,7 @@ shinyUI(fluidPage(
                      )
                  )),
         
-        
-        # common support  -----------------------------------------------------------
-        
-        # tabPanel(title = "Common support"),
-        
-        # matching page -----------------------------------------------------------
-        
-        # tabPanel(title = "Matching"),
-        
+
         # matching page -----------------------------------------------------------
 
         tabPanel(title = "Regression discontinuity",
@@ -275,69 +302,84 @@ shinyUI(fluidPage(
                      sidebarPanel(
                          width = 4,
                          h3("Regression discontinuity"),
-                         h5("Explain regression discontinuity design ...."),
+                         h5("Regression discontinuity design is a special case of an observational study where treatment is assigned solely based on an X variable (in this example `Age`). The observations are split into groups based on a cutoff value, and treatment is assigned to one of these groups."),
+                         h5("In this hypothetical example we're going to envision a drug study where participants are given the experimental drug only if they are over a certain age cutoff. The outcome variable is a general measure of `health`."),
+                         h5("First, attempt to estimate the treatment effect between the two groups using the models available in the dropdown below. Adjust the bandwidth to include/exclude which data to include in your model. Use the play button on the right side of the bandwidth slider to visualize how models change with increasing bandwidths."),
+                         h5("The 'Observable data' tab visualizes the data available to the researcher, and the 'All data' tab visualizes the data that a theoretical omniscient being who could see if the drug was simultaneously given to everyone and not given (i.e. seeing the observed data and the counterfactual)."),
+                         h5("Second, explore the data generating process to see how each model performs with a given set of assumptions."),
                          br(),
-                         h4("Analysis tools"),
-                         selectInput(inputId = "disc_select_model",
-                                     label = "Modeled relationship:",
-                                     choices = c("Linear", "Polynomial - second order", "Polynomial - third order"),
-                                     selected = "Linear",
-                                     multiple = FALSE),
-                         sliderInput(inputId = 'disc_numeric_window',
-                                     label = 'Bandwidth',
-                                     min = 1,
-                                     max = 80,
-                                     value = 10,
-                                     step = 1,
-                                     animate = animationOptions(interval = 400, loop = FALSE)),
-                         strong("Tau estimate:"),
-                         htmlOutput('disc_table'),
-                         br(),
-                         h4("Data generation process"),
-                         selectInput(inputId = "disc_select_DGP",
-                                     label = "True relationship:",
-                                     choices = c("Linear", "Polynomial - second order", "Polynomial - third order"),
-                                     selected = "Linear",
-                                     multiple = FALSE),
-                         sliderInput(inputId = "disc_numeric_tau",
-                                      label = "True difference (tau) at the cutoff:",
-                                      min = 0, 
-                                      max = 20, 
-                                      step = 1,
-                                      value = 5),
-                         sliderInput(inputId = "disc_numeric_cutoff",
-                                     label = "Cutoff age:",
-                                     min = 30, 
-                                     max = 70, 
-                                     step = 1,
-                                     value = 50),
-                         sliderInput(inputId = "disc_numeric_n",
-                                      label = "n:",
-                                      min = 100, 
-                                      max = 1000, 
-                                      step = 50,
-                                      value = 250),
-                         sliderInput(
-                             inputId = "disc_slider_error",
-                             label = "Error:",
-                             value = 5,
-                             min = 0,
-                             max = 10,
-                             step = 1
-                         ),
-                         conditionalPanel(
-                             condition = "input.disc_select_DGP == 'Linear'",
-                             sliderInput(inputId = "disc_slider_slope",
-                                         label = "Slope:",
-                                         min = 0,
-                                         max = 1,
-                                         step = 0.1,
-                                         value = 1),
-                         ),
-                         HTML('<details><summary>Pseudocode to generate the data</summary>'),
-                         uiOutput("disc_select_DGP_formula"),
-                         HTML('</details><br>')
-                         ),
+                         tabsetPanel(
+                           id = 'disc_tabs_left',
+                           type = 'tabs',
+                           tabPanel(
+                             "Analysis tools",
+                             br(),
+                             selectInput(inputId = "disc_select_model",
+                                         label = "Modeled relationship:",
+                                         choices = c("Linear", "Polynomial - quadratic", "Polynomial - cubic"),
+                                         selected = "Linear",
+                                         multiple = FALSE),
+                             sliderInput(inputId = 'disc_numeric_window',
+                                         label = 'Bandwidth:',
+                                         min = 1,
+                                         max = 80,
+                                         value = 10,
+                                         step = 1,
+                                         animate = animationOptions(interval = 400, loop = FALSE)),
+                             br(),
+                             h4("Tau estimates:"),
+                             htmlOutput('disc_table')
+                           ),
+                         tabPanel(
+                           'Data generation process',
+                           br(),
+                           selectInput(inputId = "disc_select_DGP",
+                                       label = "True relationship:",
+                                       choices = c("Linear", "Polynomial - quadratic", "Polynomial - cubic"),
+                                       selected = "Linear",
+                                       multiple = FALSE),
+                           helpText('Note that these examples assume the same functional form across the two groups but that is not explicitly neccessary in practice.'),
+                           br(),
+                           sliderInput(inputId = "disc_numeric_tau",
+                                        label = "True difference (tau) at the cutoff:",
+                                        min = 0, 
+                                        max = 20, 
+                                        step = 1,
+                                        value = 5),
+                           sliderInput(inputId = "disc_numeric_cutoff",
+                                       label = "Cutoff age:",
+                                       min = 30, 
+                                       max = 70, 
+                                       step = 1,
+                                       value = 50),
+                           sliderInput(inputId = "disc_numeric_n",
+                                        label = "n:",
+                                        min = 100, 
+                                        max = 1000, 
+                                        step = 50,
+                                        value = 250),
+                           sliderInput(
+                               inputId = "disc_slider_error",
+                               label = "Error:",
+                               value = 5,
+                               min = 0,
+                               max = 10,
+                               step = 1
+                           ),
+                           conditionalPanel(
+                               condition = "input.disc_select_DGP == 'Linear'",
+                               sliderInput(inputId = "disc_slider_slope",
+                                           label = "Slope:",
+                                           min = 0,
+                                           max = 1,
+                                           step = 0.1,
+                                           value = 1),
+                           ),
+                           HTML('<details><summary>Pseudocode to generate the data</summary>'),
+                           uiOutput("disc_select_DGP_formula"),
+                           HTML('</details><br>')
+                         )
+                         )),
                      mainPanel(
                          width = 6,
                          tabsetPanel(

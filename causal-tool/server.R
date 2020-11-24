@@ -1,6 +1,33 @@
 shinyServer(function(input, output) {
 
 
+# welcome page ------------------------------------------------------------
+
+  
+  observeEvent(input$welcome_button_update_plot, {
+    output$welcome_plot <- renderPlot({
+      # placeholder plot until spurious correlation dataset can be made
+      
+      x <- rnorm(100)
+      y <- rnorm(100, x)
+      
+      tibble(x = x, y = y) %>%
+        ggplot(aes(x = x, y = y)) +
+        geom_point(shape = 21, color = 'grey20', fill = '#4c2e61', 
+                   size = 4, alpha = 0.5) +
+        geom_smooth(color = 'grey20',
+                    method = 'lm',
+                    formula = y ~ x) +
+        labs(title = paste0("[PLACEHOLDER] Spurious correlations: ", round(cor(x, y), 2), ' correlation'),
+             x = NULL,
+             y = NULL)
+      
+    })
+  })
+  
+  # initiate welcome_plot by simulating button click
+  shinyjs::click("welcome_button_update_plot")
+  
 
 # fundamental problem -----------------------------------------------------
 
@@ -184,9 +211,12 @@ shinyServer(function(input, output) {
         SATE_est <-  round(mean(dat$Y[dat$z == 1]) - mean(dat$Y[dat$z == 0]), 2)
         reg <- round(coef(lm(Y ~ x + z, data = dat))[['z']], 2)
         
-        paste0("SATE: ", SATE, "<br>",
-               "Estimated SATE: ", SATE_est, "<br>",
-               "Estimated SATE from regression: ", reg)
+        tibble(Method = c('SATE', 'Estimated SATE', 'Estimated SATE from regression'),
+               Tau = c(SATE, SATE_est, reg)) %>% 
+        knitr::kable(digits = 2, format = 'html') %>% 
+          kableExtra::kable_styling(
+            bootstrap_options = c("striped", "hover", "condensed")
+          )
     })  
         
     output$means_plot_SATE <- renderPlotly({
@@ -509,7 +539,7 @@ shinyServer(function(input, output) {
             '<br>',
             'y_1 = ', slope_correction, ' + ', tau, ' + ', slope, ' + age + rnorm(n, 0, ', e, ')'
           )
-        } else if (input$disc_select_DGP == 'Polynomial - second order'){
+        } else if (input$disc_select_DGP == 'Polynomial - quadratic'){
           text <- paste0(
             'n = ', n,
             '<br>',
@@ -521,7 +551,7 @@ shinyServer(function(input, output) {
             '<br>',
             'y_1 = 30 + ', tau, ' + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, 0, ', e, ')'
           )
-        } else if (input$disc_select_DGP == 'Polynomial - third order'){
+        } else if (input$disc_select_DGP == 'Polynomial - cubic'){
           text <- paste0(
             'n = ', n,
             '<br>',
@@ -563,10 +593,10 @@ shinyServer(function(input, output) {
       if (input$disc_select_DGP == 'Linear'){
         y_0 <- 0 + (slope * age) + rnorm(n, 0, e) + slope_correction
         y_1 <- 0 + tau + (slope * age) + rnorm(n, 0, e) + slope_correction
-      } else if (input$disc_select_DGP == 'Polynomial - second order'){
+      } else if (input$disc_select_DGP == 'Polynomial - quadratic'){
         y_0 <- 30 + 0 + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, 0, e)
         y_1 <- 30 + tau + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, 0, e)
-      } else if (input$disc_select_DGP == 'Polynomial - third order'){
+      } else if (input$disc_select_DGP == 'Polynomial - cubic'){
         # regenerate a wider age vector b/c the polynomial 'squishs' the data along the x
         age <- rnorm(n, 50, 18)
         eligible <- (age > cutoff)
@@ -624,11 +654,11 @@ shinyServer(function(input, output) {
         p <- p +
           geom_smooth(data = dat_cut, color = 'grey10',
                       method = 'lm', formula = y ~ x)
-      } else if (input$disc_select_model == 'Polynomial - second order'){
+      } else if (input$disc_select_model == 'Polynomial - quadratic'){
         p <- p +
           geom_smooth(data = dat_cut, color = 'grey10',
                       method = 'lm', formula = y ~ poly(x, 2, raw = TRUE))
-      } else if (input$disc_select_model == 'Polynomial - third order'){
+      } else if (input$disc_select_model == 'Polynomial - cubic'){
         p <- p +
           geom_smooth(data = dat_cut, color = 'grey10',
                       method = 'lm', formula = y ~ poly(x, 3, raw = TRUE))
@@ -665,13 +695,13 @@ shinyServer(function(input, output) {
           geom_smooth(color = 'grey10', method = 'lm', formula = y ~ x)
       }
 
-      if (input$disc_select_model == 'Polynomial - second order'){
+      if (input$disc_select_model == 'Polynomial - quadratic'){
         p <- p +
           geom_smooth(color = 'grey10', method = 'lm', 
                       formula = y ~ poly(x, 2, raw = TRUE))
       }
 
-      if (input$disc_select_model == 'Polynomial - third order'){
+      if (input$disc_select_model == 'Polynomial - cubic'){
         p <- p +
           geom_smooth(color = 'grey10', method = 'lm', 
                       formula = y ~ poly(x, 3, raw = TRUE))
@@ -694,14 +724,14 @@ shinyServer(function(input, output) {
       
       # all observable data within the window
       model_A_lm <- lm(y ~ age + eligible,  data = data_window)
-      model_A_int <- lm(y ~ age * eligible, data = data_window)
+      # model_A_int <- lm(y ~ age * eligible, data = data_window)
       model_A_quad <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_window)
       model_A_cubic <- lm(y ~ age * eligible + I(age^2) * eligible + I(age^3) * eligible, 
                           data = data_window)
       
       # all observable data
       model_A_lm_all <- lm(y ~ age + eligible, data = data_obs)
-      model_A_int_all <- lm(y ~ age * eligible, data = data_obs)
+      # model_A_int_all <- lm(y ~ age * eligible, data = data_obs)
       model_A_quad_all <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_obs)
       model_A_cubic_all <- lm(y ~ age * eligible + I(age^2) * eligible + I(age^3) * eligible, data = data_obs)
   
@@ -713,10 +743,11 @@ shinyServer(function(input, output) {
       # TODO make sure these estimates match the possible user-input relationship types
       # add 'all data' god-view column
       estimates <- tibble(
-        Model = c("Linear model", "Linear model w/interaction", 'Quadratic model', 'Cubic model', 'Difference in means'), #cubic
+        # Model = c("Linear model", "Linear model w/interaction", 'Quadratic model', 'Cubic model', 'Difference in means'),
+        Model = c("Linear model", 'Quadratic model', 'Cubic model', 'Difference in means'),
         `Data within bandwidth` = c(coef(model_A_lm)[['eligibleTRUE']],
-                                 coef(model_A_int)[['eligibleTRUE']] 
-                                  + (cutoff * coef(model_A_int)[['age:eligibleTRUE']]),
+                                 # coef(model_A_int)[['eligibleTRUE']] 
+                                 #  + (cutoff * coef(model_A_int)[['age:eligibleTRUE']]),
                                  coef(model_A_quad)[['eligibleTRUE']]
                                    + (cutoff * coef(model_A_quad)[['age:eligibleTRUE']])
                                    + (cutoff^2 * coef(model_A_quad)[['eligibleTRUE:I(age^2)']]),
@@ -726,8 +757,8 @@ shinyServer(function(input, output) {
                                   + (cutoff^3 * coef(model_A_cubic)[['eligibleTRUE:I(age^3)']]),
                                  diff(tapply(data_window$y, INDEX = data_window$eligible, FUN = mean))),
         `All observable` = c(coef(model_A_lm_all)[['eligibleTRUE']],
-                                  coef(model_A_int_all)[['eligibleTRUE']] 
-                                    + (cutoff * coef(model_A_int_all)[['age:eligibleTRUE']]),
+                                  # coef(model_A_int_all)[['eligibleTRUE']] 
+                                  #   + (cutoff * coef(model_A_int_all)[['age:eligibleTRUE']]),
                                   coef(model_A_quad_all)[['eligibleTRUE']]
                                     + (cutoff * coef(model_A_quad_all)[['age:eligibleTRUE']])
                                     + (cutoff^2 * coef(model_A_quad_all)[['eligibleTRUE:I(age^2)']]),
@@ -736,7 +767,7 @@ shinyServer(function(input, output) {
                                     + (cutoff^2 * coef(model_A_cubic_all)[['eligibleTRUE:I(age^2)']])
                                     + (cutoff^3 * coef(model_A_cubic_all)[['eligibleTRUE:I(age^3)']]),
                                   diff(tapply(data_obs$y, INDEX = data_obs$eligible, FUN = mean))),
-        ` ` = c(rep(NA, 4),
+        ` ` = c(rep(NA, 3),
                        mean(data_full$y_1 - data_full$y_0))) %>% 
         knitr::kable(digits = 2, format = 'html') %>% 
         kableExtra::add_header_above(c("", "Observable data" = 2, 'All data' = 1)) %>% 
