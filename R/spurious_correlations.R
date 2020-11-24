@@ -49,6 +49,11 @@ stock_prices %>%
 
 # fredr -------------------------------------------------------------------
 
+# https://fred.stlouisfed.org/categories
+# https://fred.stlouisfed.org/docs/api/fred/category_children.html
+# https://fred.stlouisfed.org/docs/api/fred/series.html
+
+
 library(fredr)
 fredr_set_key('cea428a6df3693db750a6a526cef15b3')
 fredr(

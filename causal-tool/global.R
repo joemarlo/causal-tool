@@ -35,16 +35,5 @@ master_df <- read_csv(
 ) %>% as.data.frame()
 rownames(master_df) <- 1:nrow(master_df)
 
-# # set master dataset
-# master_df <- diamonds %>%
-#   filter(cut == 'Good',
-#          color == 'G',
-#          clarity == 'VS2') %>%
-#   filter(!(x == 0 | y == 0 | z == 0)) %>% 
-#   dplyr::select(price, carat, depth, x, y, z) %>% 
-#   as.data.frame()
-# rownames(master_df) <- 1:nrow(master_df)
-# 
-# # set initial treatment
-# master_df$treat <- rbinom(nrow(master_df), size = 1, prob = 0.5)
-# 
+# source UI modules
+map(list.files('UI'), function(file) source(file.path("UI", file)))

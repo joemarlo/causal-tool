@@ -1,4 +1,4 @@
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
 
 
 # welcome page ------------------------------------------------------------
@@ -8,19 +8,20 @@ shinyServer(function(input, output) {
     output$welcome_plot <- renderPlot({
       # placeholder plot until spurious correlation dataset can be made
       
-      x <- rnorm(100)
-      y <- rnorm(100, x)
+      Year <- 2000:2020
+      y1 <- rnorm(length(Year), Year/200, sd = 3)
+      y2 <- rnorm(length(Year), y1, 2)
       
-      tibble(x = x, y = y) %>%
-        ggplot(aes(x = x, y = y)) +
-        geom_point(shape = 21, color = 'grey20', fill = '#4c2e61', 
-                   size = 4, alpha = 0.5) +
-        geom_smooth(color = 'grey20',
-                    method = 'lm',
-                    formula = y ~ x) +
-        labs(title = paste0("[PLACEHOLDER] Spurious correlations: ", round(cor(x, y), 2), ' correlation'),
-             x = NULL,
-             y = NULL)
+      tibble(Year, y1, y2) %>%
+        pivot_longer(cols = c('y1', 'y2')) %>% 
+        ggplot(aes(x = Year, y = value, color = name, fill = name)) +
+        geom_line() +
+        geom_point(shape = 21, color = 'black', size = 4) +
+        labs(title = paste0("[PLACEHOLDER] Spurious correlations: ", round(cor(y1, y2), 2), ' correlation'),
+             x = "Year",
+             y = NULL,
+             fill = NULL,
+             color = NULL)
       
     })
   })
@@ -219,70 +220,160 @@ shinyServer(function(input, output) {
           )
     })  
         
-    output$means_plot_SATE <- renderPlotly({
-        # DGP() %>% 
-        #     pivot_longer(cols = c('y_0', 'y_1')) %>% 
-        #     ggplot(aes(x = x, y = value, group = name, color = name)) +
-        #     geom_point(alpha = 0.5) +
-        #     geom_smooth(method = 'lm', formula = y ~ x)
+    render_frames <- reactive({
+      # calculate the points in each frame for the animation
+      # interpolate the points between the frames
+      # returns a dataset with identifiers for each frame
       
+      # get the data
       dat <- DGP()
       
-      # create first frame
-      base_data <- dat %>%
-        mutate(frame = 1) %>%
-        pivot_longer(cols = c('y_0', 'y_1'))
+      # set number of frames to interpolate
+      n <- 30
       
       # create second frame by summarize the y axis
-      mean_y <- dat %>%
-        mutate(frame = 2) %>%
-        pivot_longer(cols = c('y_0', 'y_1')) %>%
+      frame_two <- dat %>%
+        # pivot_longer(cols = c('y_0', 'y_1')) %>%
+        pivot_longer(cols = c('y_0')) %>%
         group_by(name) %>%
         mutate(value = mean(value)) %>% 
         ungroup()
       
       # create third frame
-      mean_x <- mean_y %>% 
-        mutate(x = mean(x),
-               frame = 3)
+      frame_three <- dat %>%
+        pivot_longer(cols = c('y_0')) %>% 
+        group_by(name) %>%
+        mutate(value = mean(value)) %>% 
+        ungroup() %>% 
+        mutate(x = mean(x))  
       
-      # create frame for error bars
-      # diff <- mean_y %>% 
-      #   group_by(name) %>% 
-      #   summarize(y_diff = mean(value),
-      #             x_diff = mean(x)*1.01,
-      #             .groups = 'drop') %>% 
-      #   pivot_wider(values_from = c('y_diff', 'x_diff')) %>% 
-      #   mutate(frame = 3)
+      # interpolate between first and second frames
+      one_to_two <- map_df(1:nrow(dat), function(i){
+        interp_x <- approx(
+          x = c(dat$x[[i]], frame_two$x[[i]]),
+          # y = c(dat$y_0[[i]], frame_two$value[[i]]),
+          n = n/2,
+          ties = 'ordered'
+        )$y
+        
+        interp_y <- approx(
+          # x = c(dat$x[[i]], frame_two$x[[i]]),
+          x = c(dat$y_0[[i]], frame_two$value[[i]]),
+          n = n/2,
+          ties = 'ordered'
+        )$y
+        tibble(x = interp_x, y = interp_y, frame = 1:(n/2))
+      })
       
-      # build the plot
-      anim_plot <- base_data %>%
-        bind_rows(mean_y, mean_x) %>%
+      # interpolate between second and third frames
+      two_to_three <- map_dfr(1:nrow(frame_two), function(i){
+        interp_x <- approx(
+          x = c(frame_two$x[[i]], frame_three$x[[i]]),
+          n = n/2,
+          ties = 'ordered'
+        )$y
+        
+        interp_y <- approx(
+          x = c(frame_two$value[[i]], frame_three$value[[i]]),
+          n = n/2,
+          ties = 'ordered'
+        )$y
+        tibble(x = interp_x, y = interp_y, frame = ((n/2)+1):n)
+      })
+      
+      return(bind_rows(one_to_two, two_to_three))
+    })
+    
+    # plot the interpolating data but only render the frame
+      # according to the slider input
+    output$means_plot_SATE_new <- renderPlot({
+      dat <- render_frames()
+      
+      # plot it
+      dat %>%
+        filter(frame == input$means_slider_frame) %>% 
         ggplot() +
-        geom_point(aes(frame = frame, x = x, y = value, 
-                       group = name, fill = name), 
-                   alpha = 0.3, color = 'grey20', pch = 21, 
-                   stroke = 0.3, alpha = 0.3, size = 2) +
-        # geom_errorbar(data = diff,
-        #               aes(frame = frame, x = x_diff_y_0,
-        #                   ymin = y_diff_y_0, ymax = y_diff_y_1),
-        #               color = 'grey20', size = 2) +
+        geom_point(aes(x = x, y = y)) +
+        coord_cartesian(xlim = range(dat$x), ylim = range(dat$y)) +
         labs(x = 'x',
              y = 'y')
       
-      # animate the plot
-      anim_plot <- ggplotly(anim_plot, tooltip = FALSE) %>% 
-        config(displayModeBar = FALSE) %>% 
-        layout(legend = list(orientation = "h", xanchor = "center", x = 0.5, y = 1.1),
-               xaxis = list(fixedrange = TRUE),
-               yaxis = list(fixedrange = TRUE)) %>% 
-        animation_opts(frame = 1500, redraw = FALSE) %>% 
-        animation_slider(hide = TRUE) %>% 
-        animation_button(label = "Animate")
-      
-      anim_plot
-      
     })
+    
+    # reset animation slider on click
+    observeEvent(input$means_button_reset, {
+      updateSliderInput(session = session,
+                        inputId = 'means_slider_frame',
+                        value = 1)
+      updateSliderInput(session = session,
+                        inputId = 'means_slider_frame_est_SATE',
+                        value = 1)
+    })
+    
+    # output$means_plot_SATE <- renderPlotly({
+    #     # DGP() %>% 
+    #     #     pivot_longer(cols = c('y_0', 'y_1')) %>% 
+    #     #     ggplot(aes(x = x, y = value, group = name, color = name)) +
+    #     #     geom_point(alpha = 0.5) +
+    #     #     geom_smooth(method = 'lm', formula = y ~ x)
+    #   
+    #   dat <- DGP()
+    #   
+    #   # create first frame
+    #   base_data <- dat %>%
+    #     mutate(frame = 1) %>%
+    #     pivot_longer(cols = c('y_0', 'y_1'))
+    #   
+    #   # create second frame by summarize the y axis
+    #   mean_y <- dat %>%
+    #     mutate(frame = 2) %>%
+    #     pivot_longer(cols = c('y_0', 'y_1')) %>%
+    #     group_by(name) %>%
+    #     mutate(value = mean(value)) %>% 
+    #     ungroup()
+    #   
+    #   # create third frame
+    #   mean_x <- mean_y %>% 
+    #     mutate(x = mean(x),
+    #            frame = 3)
+    #   
+    #   # create frame for error bars
+    #   # diff <- mean_y %>% 
+    #   #   group_by(name) %>% 
+    #   #   summarize(y_diff = mean(value),
+    #   #             x_diff = mean(x)*1.01,
+    #   #             .groups = 'drop') %>% 
+    #   #   pivot_wider(values_from = c('y_diff', 'x_diff')) %>% 
+    #   #   mutate(frame = 3)
+    #   
+    #   # build the plot
+    #   anim_plot <- base_data %>%
+    #     bind_rows(mean_y, mean_x) %>%
+    #     ggplot() +
+    #     geom_point(aes(frame = frame, x = x, y = value, 
+    #                    group = name, fill = name), 
+    #                alpha = 0.3, color = 'grey20', pch = 21, 
+    #                stroke = 0.3, alpha = 0.3, size = 2) +
+    #     # geom_errorbar(data = diff,
+    #     #               aes(frame = frame, x = x_diff_y_0,
+    #     #                   ymin = y_diff_y_0, ymax = y_diff_y_1),
+    #     #               color = 'grey20', size = 2) +
+    #     labs(x = 'x',
+    #          y = 'y')
+    #   
+    #   # animate the plot
+    #   anim_plot <- ggplotly(anim_plot, tooltip = FALSE) %>% 
+    #     config(displayModeBar = FALSE) %>% 
+    #     layout(legend = list(orientation = "h", xanchor = "center", x = 0.5, y = 1.1),
+    #            xaxis = list(fixedrange = TRUE),
+    #            yaxis = list(fixedrange = TRUE)) %>% 
+    #     animation_opts(frame = 1500, redraw = FALSE) %>% 
+    #     animation_slider(hide = TRUE) %>% 
+    #     animation_button(label = "Animate")
+    #   
+    #   anim_plot
+    #   
+    # })
 
     output$means_plot_est_SATE <- renderPlotly({
       
@@ -537,7 +628,7 @@ shinyServer(function(input, output) {
             '<br>',
             'y_0 = ', slope_correction, ' + ', slope, ' * age + rnorm(n, 0, ', e, ')',
             '<br>',
-            'y_1 = ', slope_correction, ' + ', tau, ' + ', slope, ' + age + rnorm(n, 0, ', e, ')'
+            'y_1 = ', slope_correction, ' + ', tau, ' + ', slope, ' * age + rnorm(n, 0, ', e, ')'
           )
         } else if (input$disc_select_DGP == 'Polynomial - quadratic'){
           text <- paste0(

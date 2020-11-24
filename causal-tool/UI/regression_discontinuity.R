@@ -1,0 +1,98 @@
+UI_regression_discontinuity <- tabPanel(title = "Regression discontinuity",
+         sidebarLayout(
+           sidebarPanel(
+             width = 4,
+             h3("Regression discontinuity"),
+             h5("Regression discontinuity design is a special case of an observational study where treatment is assigned solely based on an X variable (in this example `Age`). The observations are split into groups based on a cutoff value, and treatment is assigned to one of these groups."),
+             h5("In this hypothetical example we're going to envision a drug study where participants are given the experimental drug only if they are over a certain age cutoff. The outcome variable is a general measure of `health`."),
+             h5("First, attempt to estimate the treatment effect between the two groups using the models available in the dropdown below. Adjust the bandwidth to include/exclude which data to include in your model. Use the play button on the right side of the bandwidth slider to visualize how models change with increasing bandwidths."),
+             h5("The 'Observable data' tab visualizes the data available to the researcher, and the 'All data' tab visualizes the data that a theoretical omniscient being who could see if the drug was simultaneously given to everyone and not given (i.e. seeing the observed data and the counterfactual)."),
+             h5("Second, explore the data generating process to see how each model performs with a given set of assumptions."),
+             br(),
+             tabsetPanel(
+               id = 'disc_tabs_left',
+               type = 'tabs',
+               tabPanel(
+                 "Analysis tools",
+                 br(),
+                 selectInput(inputId = "disc_select_model",
+                             label = "Modeled relationship:",
+                             choices = c("Linear", "Polynomial - quadratic", "Polynomial - cubic"),
+                             selected = "Linear",
+                             multiple = FALSE),
+                 sliderInput(inputId = 'disc_numeric_window',
+                             label = 'Bandwidth:',
+                             min = 1,
+                             max = 80,
+                             value = 10,
+                             step = 1,
+                             animate = animationOptions(interval = 400, loop = FALSE)),
+                 br(),
+                 h4("Tau estimates:"),
+                 htmlOutput('disc_table')
+               ),
+               tabPanel(
+                 'Data generation process',
+                 br(),
+                 selectInput(inputId = "disc_select_DGP",
+                             label = "True relationship:",
+                             choices = c("Linear", "Polynomial - quadratic", "Polynomial - cubic"),
+                             selected = "Linear",
+                             multiple = FALSE),
+                 helpText('Note that these examples assume the same functional form across the two groups but that is not explicitly neccessary in practice.'),
+                 br(),
+                 sliderInput(inputId = "disc_numeric_tau",
+                             label = "True difference (tau) at the cutoff:",
+                             min = 0, 
+                             max = 20, 
+                             step = 1,
+                             value = 5),
+                 sliderInput(inputId = "disc_numeric_cutoff",
+                             label = "Cutoff age:",
+                             min = 30, 
+                             max = 70, 
+                             step = 1,
+                             value = 50),
+                 sliderInput(inputId = "disc_numeric_n",
+                             label = "n:",
+                             min = 100, 
+                             max = 1000, 
+                             step = 50,
+                             value = 250),
+                 sliderInput(
+                   inputId = "disc_slider_error",
+                   label = "Error:",
+                   value = 5,
+                   min = 0,
+                   max = 10,
+                   step = 1
+                 ),
+                 conditionalPanel(
+                   condition = "input.disc_select_DGP == 'Linear'",
+                   sliderInput(inputId = "disc_slider_slope",
+                               label = "Slope:",
+                               min = 0,
+                               max = 1,
+                               step = 0.1,
+                               value = 1),
+                 ),
+                 HTML('<details><summary>Pseudocode to generate the data</summary>'),
+                 uiOutput("disc_select_DGP_formula"),
+                 HTML('</details><br>')
+               )
+             )),
+           mainPanel(
+             width = 6,
+             tabsetPanel(
+               id = 'disc_tabs',
+               type = 'tabs',
+               tabPanel("Observable data",
+                        br(),
+                        plotOutput("disc_plot_observable", height = 600)),
+               tabPanel("All data",
+                        br(),
+                        plotOutput("disc_plot_all", height = 600))
+             )
+           )
+         )
+)
