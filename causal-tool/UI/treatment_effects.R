@@ -2,22 +2,11 @@ UI_treatment_effects <- tabPanel(title = "Treatment effects",
          sidebarLayout(
            sidebarPanel(
              width = 4,
-             h3("Can we just take the average effect between the treatment and control groups?"),
+             h3("How do we estimate the treatment effect between two different groups?"),
+             h5("Can we just take the average effect between the treatment and control groups?"),
              h5("...explain difference in means..."),
              h5("Pretium viverra suspendisse potenti nullam ac tortor vitae. Eros donec ac odio tempor orci dapibus ultrices in. Etiam erat velit scelerisque in dictum non. Sed viverra tellus in hac habitasse. Quis risus sed vulputate odio ut enim blandit volutpat maecenas."),
              h5("Tellus id interdum velit laoreet id donec ultrices tincidunt arcu. Imperdiet nulla malesuada pellentesque elit eget. Commodo sed egestas egestas fringilla phasellus faucibus scelerisque eleifend."),
-             br(),
-             actionButton(inputId = "means_button_play",
-                          label = "Animate"),
-             tags$script(
-               # this is a jquery script that executes the play button on means_slider_frame when the user
-               # clicks the big button #means_button_play. Its a bit of a hack
-               "$(means_button_play).click(function(){
-                             setTimeout(function() {$('.slider-animate-button').click()},2);
-                             });"),
-             br(), br(),
-             actionButton(inputId = "means_button_reset",
-                          label = "Reset animation"),
              br(), br(),
              tabsetPanel(
                id = 'disc_tabs_left',
@@ -57,7 +46,7 @@ UI_treatment_effects <- tabPanel(title = "Treatment effects",
                  sliderInput(
                    inputId = "means_slider_error",
                    label = "Error:",
-                   value = 1,
+                   value = 2,
                    min = 0,
                    max = 10,
                    step = 1
@@ -66,23 +55,29 @@ UI_treatment_effects <- tabPanel(title = "Treatment effects",
                tabPanel(
                  "Animation options",
                  br(),
-                 sliderInput(
-                   inputId = 'means_slider_frame',
-                   label = "SATE frame:",
-                   value = 1,
-                   min = 1,
-                   max = 30,
-                   step = 1,
-                   animate = animationOptions(interval = 125, loop = FALSE)
+                 tags$div(
+                   id = 'div_means_slider_frame_SATE',
+                   sliderInput(
+                     inputId = 'means_slider_frame_SATE',
+                     label = "SATE frame:",
+                     value = 1,
+                     min = 1,
+                     max = n_frames,
+                     step = 1,
+                     animate = animationOptions(interval = 125, loop = FALSE)
+                   )
                  ),
-                 sliderInput(
-                   inputId = 'means_slider_frame_est_SATE',
-                   label = "Estimating SATE frame:",
-                   value = 1,
-                   min = 1,
-                   max = 30,
-                   step = 1,
-                   animate = animationOptions(interval = 125, loop = FALSE)
+                 tags$div(
+                   id = 'div_means_slider_frame_est_SATE',
+                   sliderInput(
+                     inputId = 'means_slider_frame_est_SATE',
+                     label = "Estimating SATE frame:",
+                     value = 1,
+                     min = 1,
+                     max = n_frames,
+                     step = 1,
+                     animate = animationOptions(interval = 125, loop = FALSE)
+                   )
                  )
                )
              )),
@@ -92,10 +87,22 @@ UI_treatment_effects <- tabPanel(title = "Treatment effects",
                id = "means_tabs",
                type = "tabs",
                tabPanel("[SATE]",
-                        # plotlyOutput("means_plot_SATE", height = 500),
-                        plotOutput("means_plot_SATE_new", height = 500)), 
+                        plotOutput("means_plot_SATE", height = 500),
+                        br(),
+                        actionButton(inputId = "means_button_play",
+                                     label = "Animate"),
+                        br(), br(),
+                        actionButton(inputId = "means_button_reset_SATE",
+                                     label = "Reset animation"),
+                        tags$script(
+                          # this is a jquery script that executes the play button on means_slider_frame when the user
+                          # clicks the #means_button_play. Its a bit of a hack
+                          "$('#means_button_play').click(function(){
+                             {$('#div_means_slider_frame_SATE .slider-animate-button').click()};
+                             });")
+                        ), 
                tabPanel("[Estimating SATE]",
-                        plotlyOutput("means_plot_est_SATE", height = 500)), 
+                        plotOutput("means_plot_est_SATE", height = 500)), 
                tabPanel("[Regression]",
                         plotOutput('means_plot_regression', height = 500)),
                tabPanel("[Bias and efficiency]")
