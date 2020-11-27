@@ -1,5 +1,6 @@
 ideas.txt
 R/api_key.R
+R/*.csv
 
 # History files
 .Rhistory

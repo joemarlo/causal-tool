@@ -1,7 +1,7 @@
 UI_propensity_scores <- tabPanel(title = "Propensity scores",
          sidebarLayout(
            sidebarPanel(
-             width = 4,
+             width = 5,
              h3("Propensity scores are the probability that an observation is assigned to treatment based on the observed covariates"),
              h5("The scores can reduce selection bias and constrain inference to areas of common support."),
              h5("In order to illustrate the mechanism, let's first set treatment as either random or a function of the covariates."),
@@ -56,7 +56,7 @@ UI_propensity_scores <- tabPanel(title = "Propensity scores",
              )
            ),
            mainPanel(
-             width = 6,
+             width = 7,
              tabsetPanel(
                id = "upload_tabs",
                type = "tabs",
@@ -69,7 +69,7 @@ UI_propensity_scores <- tabPanel(title = "Propensity scores",
                         br(),
                         plotOutput("propensity_plot_matching", height = 300)
                ),
-               tabPanel("Overlap and balance")
+               tabPanel("[Overlap and balance]")
              )
            )
          ))

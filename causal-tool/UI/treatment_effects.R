@@ -1,7 +1,12 @@
-UI_treatment_effects <- tabPanel(title = "Treatment effects",
-         sidebarLayout(
-           sidebarPanel(
-             width = 4,
+UI_treatment_effects <- tabPanel(
+  title = "Treatment effects",
+  navlistPanel(
+    id = "fundamental_nav",
+    widths = c(1, 11),
+    tabPanel("1)",
+      sidebarLayout(
+        sidebarPanel(
+             width = 5,
              h3("How do we estimate the treatment effect between two different groups?"),
              h5("Can we just take the average effect between the treatment and control groups?"),
              h5("...explain difference in means..."),
@@ -30,7 +35,7 @@ UI_treatment_effects <- tabPanel(title = "Treatment effects",
                  sliderInput(
                    inputId = "means_select_tau",
                    label = "Tau:",
-                   value = 5,
+                   value = 3,
                    min = 0,
                    max = 100,
                    step = 1
@@ -62,7 +67,7 @@ UI_treatment_effects <- tabPanel(title = "Treatment effects",
                      label = "SATE frame:",
                      value = 1,
                      min = 1,
-                     max = n_frames,
+                     max = 20,
                      step = 1,
                      animate = animationOptions(interval = 125, loop = FALSE)
                    )
@@ -74,7 +79,19 @@ UI_treatment_effects <- tabPanel(title = "Treatment effects",
                      label = "Estimating SATE frame:",
                      value = 1,
                      min = 1,
-                     max = n_frames,
+                     max = 20,
+                     step = 1,
+                     animate = animationOptions(interval = 125, loop = FALSE)
+                   )
+                 ),
+                 tags$div(
+                   id = 'div_means_slider_frame_regression',
+                   sliderInput(
+                     inputId = 'means_slider_frame_regression',
+                     label = "Regression frame:",
+                     value = 1,
+                     min = 1,
+                     max = 20,
                      step = 1,
                      animate = animationOptions(interval = 125, loop = FALSE)
                    )
@@ -82,14 +99,14 @@ UI_treatment_effects <- tabPanel(title = "Treatment effects",
                )
              )),
            mainPanel(
-             width = 6,
+             width = 7,
              tabsetPanel(
                id = "means_tabs",
                type = "tabs",
-               tabPanel("[SATE]",
+               tabPanel("SATE",
                         plotOutput("means_plot_SATE", height = 500),
                         br(),
-                        actionButton(inputId = "means_button_play",
+                        actionButton(inputId = "means_button_play_SATE",
                                      label = "Animate"),
                         br(), br(),
                         actionButton(inputId = "means_button_reset_SATE",
@@ -97,16 +114,74 @@ UI_treatment_effects <- tabPanel(title = "Treatment effects",
                         tags$script(
                           # this is a jquery script that executes the play button on means_slider_frame when the user
                           # clicks the #means_button_play. Its a bit of a hack
-                          "$('#means_button_play').click(function(){
+                          "$('#means_button_play_SATE').click(function(){
                              {$('#div_means_slider_frame_SATE .slider-animate-button').click()};
-                             });")
-                        ), 
-               tabPanel("[Estimating SATE]",
-                        plotOutput("means_plot_est_SATE", height = 500)), 
-               tabPanel("[Regression]",
-                        plotOutput('means_plot_regression', height = 500)),
-               tabPanel("[Bias and efficiency]")
+                             });"
+                        )), 
+               tabPanel("Estimating SATE",
+                        plotOutput("means_plot_est_SATE", height = 500),
+                        br(),
+                        actionButton(inputId = "means_button_play_est_SATE",
+                                     label = "Animate"),
+                        br(), br(),
+                        actionButton(inputId = "means_button_reset_est_SATE",
+                                     label = "Reset animation"),
+                        tags$script(
+                          # this is a jquery script that executes the play button on means_slider_frame when the user
+                          # clicks the #means_button_play. Its a bit of a hack
+                          "$('#means_button_play_est_SATE').click(function(){
+                             {$('#div_means_slider_frame_est_SATE .slider-animate-button').click()};
+                             });"
+                        )), 
+               tabPanel("Regression",
+                        plotOutput('means_plot_regression', height = 500),
+                        br(),
+                        actionButton(inputId = "means_button_play_regression",
+                                     label = "Animate"),
+                        br(), br(),
+                        actionButton(inputId = "means_button_reset_regression",
+                                     label = "Reset animation"),
+                        tags$script(
+                          # this is a jquery script that executes the play button on means_slider_frame when the user
+                          # clicks the #means_button_play. Its a bit of a hack
+                          "$('#means_button_play_regression').click(function(){
+                             {$('#div_means_slider_frame_regression .slider-animate-button').click()};
+                             });"
+                        ))
              )
            )
          )
+    ),
+      tabPanel("2)",
+          sidebarLayout(
+            sidebarPanel(
+              width = 5,
+              h3("Why bother with regression estimates if they seem to give us a similar answer?"),
+              h5("Regression results in much more efficient estimates. Playing statistics god, we can see how the observed outcomes and estimates change if we relabel the treatment assignment n amount of times. This is a randomization distribution. We then calculate SATE and the regression estimate for each of these n simulations."),
+              h5('You can think of this simulation process as repetitively taking samples of the same dataset, but each time randomly assigning treatment to a new group of observations and estimating the treatment effect from the resulting groups.'),
+              h5("The resulting plot shows how the regression estimate is unbiased for SATE and the variance of the distribution is much smaller (i.e. more efficient)."),
+              h5("This dynamic holds with even as few as 100 simulations."),
+              br(),
+              sliderInput(
+                inputId = 'means_slider_n_sims',
+                label = "n simulations:",
+                value = 500,
+                min = 100,
+                max = 1000,
+                step = 100
+              )
+            ),
+            mainPanel(
+              width = 7,
+              tabsetPanel(
+                id = "means_tabs",
+                type = "tabs",
+                tabPanel("Randomization distribution",
+                         plotOutput("means_plot_bias", height = 500)),
+                tabPanel("[Sampling distribution]")
+              )
+            )
+          )
+      )
+    )         
 )

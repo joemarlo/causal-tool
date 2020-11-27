@@ -119,7 +119,7 @@ shinyServer(function(input, output, session) {
 # randomization -----------------------------------------------------------
 
     # initiate list of treatment observations
-    selected_points <- reactiveValues(car_names = NULL)
+    selected_points <- reactiveValues(row_names = NULL)
     
     observeEvent(input$randomization_plot_click, {
         
@@ -128,12 +128,12 @@ shinyServer(function(input, output, session) {
         
         tryCatch({
             event_car <- rownames(nearPoints(master_df, input$randomization_plot_click, threshold = 15, maxpoints = 1))
-            if (event_car %in% selected_points$car_names){
+            if (event_car %in% selected_points$row_names){
               # remove point from selected list  
-              selected_points$car_names <- setdiff(selected_points$car_names, event_car)
+              selected_points$row_names <- setdiff(selected_points$row_names, event_car)
             } else if (event_car %in% rownames(master_df)) {
               # add point to selected list  
-              selected_points$car_names <- c(selected_points$car_names, event_car)
+              selected_points$row_names <- c(selected_points$row_names, event_car)
               # remove floating UI box
               removeUI(selector = "#randomization_floating_box")
             }},
@@ -144,12 +144,12 @@ shinyServer(function(input, output, session) {
     
     # randomize assignment when user clicks button
     observeEvent(input$randomize_button, {
-        selected_points$car_names <- sample(rownames(master_df), size = round(nrow(master_df)/2))
+        selected_points$row_names <- sample(rownames(master_df), size = round(nrow(master_df)/2))
     })
 
     # remove assignment when user clicks button    
     observeEvent(input$randomize_reset_button, {
-        selected_points$car_names <- c()
+        selected_points$row_names <- c()
     })
     
     # top plot    
@@ -157,7 +157,7 @@ shinyServer(function(input, output, session) {
       master_df %>%
         dplyr::select(-treat) %>%
         rownames_to_column() %>% 
-        mutate(Group = if_else(rowname %in% selected_points$car_names,
+        mutate(Group = if_else(rowname %in% selected_points$row_names,
                                    'Treatment', 'Control')) %>% 
         ggplot(aes_string(x = sym(input$randomization_variable_x), 
                           y = sym(input$randomization_variable_y))) +
@@ -170,7 +170,7 @@ shinyServer(function(input, output, session) {
       master_df %>%
         dplyr::select(-treat) %>%
         rownames_to_column() %>%
-        mutate(Group = if_else(rowname %in% selected_points$car_names,
+        mutate(Group = if_else(rowname %in% selected_points$row_names,
                                'Treatment', 'Control')) %>%
         pivot_longer(cols = where(is.numeric)) %>%
         ggplot(aes(x = value, group = Group, fill = Group)) +
@@ -208,8 +208,15 @@ shinyServer(function(input, output, session) {
       updateSliderInput(session = session,
                         inputId = 'means_slider_frame_SATE',
                         value = 1)
+    })
+    observeEvent(input$means_button_reset_est_SATE, {
       updateSliderInput(session = session,
                         inputId = 'means_slider_frame_est_SATE',
+                        value = 1)
+    })
+    observeEvent(input$means_button_reset_regression, {
+      updateSliderInput(session = session,
+                        inputId = 'means_slider_frame_regression',
                         value = 1)
     })
     
@@ -252,48 +259,48 @@ shinyServer(function(input, output, session) {
       one_to_two <- map_df(1:nrow(dat), function(i){
         interp_x <- approx(
           x = c(dat$x[[i]], frame_two$x[[i]]),
-          n = n_frames/2,
+          n = 15,
           ties = 'ordered'
         )$y
         
         interp_y0 <- approx(
           x = c(dat$y_0[[i]], frame_two$y_0[[i]]),
-          n = n_frames/2,
+          n = 15,
           ties = 'ordered'
         )$y
         
         interp_y1 <- approx(
           x = c(dat$y_1[[i]], frame_two$y_1[[i]]),
-          n = n_frames/2,
+          n = 15,
           ties = 'ordered'
         )$y
         
         tibble(x = interp_x, y_0 = interp_y0, y_1 = interp_y1, 
-               frame = 1:(n_frames/2), index = i)
+               frame = 1:15, index = i)
       })
       
       # interpolate between second and third frames
       two_to_three <- map_dfr(1:nrow(frame_two), function(i){
         interp_x <- approx(
           x = c(frame_two$x[[i]], frame_three$x[[i]]),
-          n = n_frames/2,
+          n = 5,
           ties = 'ordered'
         )$y
         
         interp_y0 <- approx(
           x = c(frame_two$y_0[[i]], frame_three$y_0[[i]]),
-          n = n_frames/2,
+          n = 5,
           ties = 'ordered'
         )$y
         
         interp_y1 <- approx(
           x = c(frame_two$y_1[[i]], frame_three$y_1[[i]]),
-          n = n_frames/2,
+          n = 5,
           ties = 'ordered'
         )$y
         
         tibble(x = interp_x, y_0 = interp_y0, y_1 = interp_y1, 
-               frame = ((n_frames/2)+1):n_frames, index = i)
+               frame = 16:20, index = i)
       })
       
       # combine and add z back in based on the index
@@ -324,7 +331,7 @@ shinyServer(function(input, output, session) {
              fill = NULL)
       
       # on the last frame, add error bars to highlight difference in points
-      if (input$means_slider_frame_SATE == n_frames){
+      if (input$means_slider_frame_SATE == 20){
         bar_position <- tibble(x = mean(dat$x) + 1, ymin = mean(dat$y_0),
                                ymax = mean(dat$y_1))
         p <- p +
@@ -358,7 +365,7 @@ shinyServer(function(input, output, session) {
              fill = NULL)
       
       # on the last frame, add error bars to highlight difference in points
-      if (input$means_slider_frame_est_SATE == n_frames){
+      if (input$means_slider_frame_est_SATE == 20){
         
         SATE_est <- round(mean(dat$Y[dat$z == 1]) - mean(dat$Y[dat$z == 0]), 2)
         bar_position <- tibble(x = mean(dat$x) + 1, ymin = mean(dat$y_0),
@@ -383,6 +390,49 @@ shinyServer(function(input, output, session) {
         geom_smooth(method = 'lm', formula = y ~ x)
     })
   
+    
+    output$means_plot_bias <- renderPlot({
+      
+      dat <- DGP()
+      n_sims <- input$means_slider_n_sims
+      n <- input$means_select_n
+
+      # run simulation, shuffling the treatment label each time
+      sims <- map_dfr(1:n_sims, function(i){
+        
+        # randomly assign treatment status to each individual
+        dat$z <- rbinom(n = n, size = 1, p = 0.5)
+        
+        # overwrite Y with new 'observed' values
+        dat$Y <- (dat$y_0 * -(dat$z - 1)) + (dat$y_1 * dat$z)
+        
+        # estimate the treatment effect
+        SATE_est <- mean(dat$Y[dat$z == 1]) - mean(dat$Y[dat$z == 0])
+        reg <- coef(lm(Y ~ x + z, data = dat))[['z']]
+        
+        return(tibble(`SATE estimate` = SATE_est, `Regression estimate` = reg, ID = i))
+      })
+      
+      # calculate mean per estimator
+      group_means <- sims %>%
+        pivot_longer(cols = -ID) %>% 
+        group_by(name) %>% 
+        summarize(mean = mean(value, na.rm = TRUE),
+                  .groups = 'drop')
+
+      # plot it
+      sims %>% 
+        pivot_longer(cols = -ID) %>% 
+        ggplot(aes(x = value, fill = name)) +
+        geom_density(alpha = 0.5) +
+        geom_vline(data = group_means, aes(xintercept = mean, color = name)) +
+        guides(color = FALSE) +
+        labs(x = NULL,
+             y = NULL,
+             fill = NULL)
+
+    })
+    
 
 # propensity scores -------------------------------------------------------
 
@@ -421,7 +471,7 @@ shinyServer(function(input, output, session) {
         # scale probs b/t 0:1
         probs <- (probs - min(probs)) / (max(probs) - min(probs))
         
-        # calculate treatment
+        # assign treatment 
         treat <- rbinom(
           n = nrow(master_df),
           size = 1,
@@ -762,62 +812,82 @@ shinyServer(function(input, output, session) {
     # the table of regression estimates
     output$disc_table <- renderText({
       
+      # get the data
       data <- disc_data()
       data_full <- data[['full']]
       data_obs <- data[['observed']]
 
+      # get the user inputs
       cutoff <- input$disc_numeric_cutoff 
       min_age <- cutoff - (input$disc_numeric_window / 2)
       max_age <- cutoff + (input$disc_numeric_window / 2)
       data_window <- data_obs[data_obs$age >= min_age & data_obs$age <= max_age,]
       
+      ## models
       # all observable data within the window
-      model_A_lm <- lm(y ~ age + eligible,  data = data_window)
-      # model_A_int <- lm(y ~ age * eligible, data = data_window)
-      model_A_quad <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_window)
-      model_A_cubic <- lm(y ~ age * eligible + I(age^2) * eligible + I(age^3) * eligible, 
+      model_lm_bandwidth <- lm(y ~ age * eligible,  data = data_window)
+      model_quad_bandwidth <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_window)
+      model_cubic_bandwidth <- lm(y ~ age * eligible + I(age^2) * eligible + I(age^3) * eligible, 
                           data = data_window)
       
       # all observable data
-      model_A_lm_all <- lm(y ~ age + eligible, data = data_obs)
-      # model_A_int_all <- lm(y ~ age * eligible, data = data_obs)
-      model_A_quad_all <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_obs)
-      model_A_cubic_all <- lm(y ~ age * eligible + I(age^2) * eligible + I(age^3) * eligible, data = data_obs)
+      model_lm_observable <- lm(y ~ age * eligible, data = data_obs)
+      model_quad_observable <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_obs)
+      model_cubic_observable <- lm(y ~ age * eligible + I(age^2) * eligible + I(age^3) * eligible, data = data_obs)
   
-      # all data
-      # model_A_lm_god <- lm(y ~ age + eligible, data = data_full)
-      # model_A_int_god <- lm(y ~ age * eligible, data = data_full)
-      # model_A_quad_god <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_full)
+      # god view data
+      data_god <- data_full %>% 
+        select(-eligible) %>% 
+        pivot_longer(cols = c("y_0", "y_1"), names_to = 'eligible', values_to = 'y') %>% 
+        mutate(eligible = recode(eligible, "y_0" = FALSE, "y_1" = TRUE))
+      model_lm_god <- lm(y ~ age * eligible, data = data_god)
+      model_quad_god <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_god)
+      model_cubic_god <- lm(y ~ age * eligible + I(age^2) * eligible + I(age^3) * eligible, data = data_god)
       
-      # TODO make sure these estimates match the possible user-input relationship types
-      # add 'all data' god-view column
+      ## coefficient estimates
+      # all observable data within the window
+      coef_lm_bandwidth <- coef(model_lm_bandwidth)[['eligibleTRUE']] + 
+        (cutoff * coef(model_lm_bandwidth)[['age:eligibleTRUE']])
+      coef_quad_bandwidth <- coef(model_quad_bandwidth)[['eligibleTRUE']] + 
+        (cutoff * coef(model_quad_bandwidth)[['age:eligibleTRUE']]) + 
+        (cutoff^2 * coef(model_quad_bandwidth)[['eligibleTRUE:I(age^2)']])
+      coef_cubic_bandwidth <- coef(model_cubic_bandwidth)[['eligibleTRUE']] + 
+        (cutoff * coef(model_cubic_bandwidth)[['age:eligibleTRUE']]) + 
+        (cutoff^2 * coef(model_cubic_bandwidth)[['eligibleTRUE:I(age^2)']]) + 
+        (cutoff^3 * coef(model_cubic_bandwidth)[['eligibleTRUE:I(age^3)']])
+      diff_bandwidth <- diff(tapply(data_window$y, INDEX = data_window$eligible, FUN = mean))
+      
+      # all observable data
+      coef_lm_observable <- coef(model_lm_observable)[['eligibleTRUE']] + 
+        (cutoff * coef(model_lm_observable)[['age:eligibleTRUE']])
+      coef_quad_observable <- coef(model_quad_observable)[['eligibleTRUE']] + 
+        (cutoff * coef(model_quad_observable)[['age:eligibleTRUE']]) + 
+        (cutoff^2 * coef(model_quad_observable)[['eligibleTRUE:I(age^2)']])
+      coef_cubic_observable <- coef(model_cubic_observable)[['eligibleTRUE']] + 
+        (cutoff * coef(model_cubic_observable)[['age:eligibleTRUE']]) + 
+        (cutoff^2 * coef(model_cubic_observable)[['eligibleTRUE:I(age^2)']]) + 
+        (cutoff^3 * coef(model_cubic_observable)[['eligibleTRUE:I(age^3)']])
+      diff_observable <- diff(tapply(data_obs$y, INDEX = data_obs$eligible, FUN = mean))
+      
+      # god view data
+      coef_lm_god <- coef(model_lm_god)[['eligibleTRUE']] + 
+        (cutoff * coef(model_lm_god)[['age:eligibleTRUE']])
+      coef_quad_god <- coef(model_quad_god)[['eligibleTRUE']] + 
+        (cutoff * coef(model_quad_god)[['age:eligibleTRUE']]) + 
+        (cutoff^2 * coef(model_quad_god)[['eligibleTRUE:I(age^2)']])
+      coef_cubic_god <- coef(model_cubic_god)[['eligibleTRUE']] + 
+        (cutoff * coef(model_cubic_god)[['age:eligibleTRUE']]) + 
+        (cutoff^2 * coef(model_cubic_god)[['eligibleTRUE:I(age^2)']]) + 
+        (cutoff^3 * coef(model_cubic_god)[['eligibleTRUE:I(age^3)']])
+      diff_god <- mean(data_full$y_1 - data_full$y_0)
+      
+      
+      # summary table
       estimates <- tibble(
-        # Model = c("Linear model", "Linear model w/interaction", 'Quadratic model', 'Cubic model', 'Difference in means'),
         Model = c("Linear model", 'Quadratic model', 'Cubic model', 'Difference in means'),
-        `Data within bandwidth` = c(coef(model_A_lm)[['eligibleTRUE']],
-                                 # coef(model_A_int)[['eligibleTRUE']] 
-                                 #  + (cutoff * coef(model_A_int)[['age:eligibleTRUE']]),
-                                 coef(model_A_quad)[['eligibleTRUE']]
-                                   + (cutoff * coef(model_A_quad)[['age:eligibleTRUE']])
-                                   + (cutoff^2 * coef(model_A_quad)[['eligibleTRUE:I(age^2)']]),
-                                 coef(model_A_cubic)[['eligibleTRUE']]
-                                  + (cutoff * coef(model_A_cubic)[['age:eligibleTRUE']])
-                                  + (cutoff^2 * coef(model_A_cubic)[['eligibleTRUE:I(age^2)']])
-                                  + (cutoff^3 * coef(model_A_cubic)[['eligibleTRUE:I(age^3)']]),
-                                 diff(tapply(data_window$y, INDEX = data_window$eligible, FUN = mean))),
-        `All observable` = c(coef(model_A_lm_all)[['eligibleTRUE']],
-                                  # coef(model_A_int_all)[['eligibleTRUE']] 
-                                  #   + (cutoff * coef(model_A_int_all)[['age:eligibleTRUE']]),
-                                  coef(model_A_quad_all)[['eligibleTRUE']]
-                                    + (cutoff * coef(model_A_quad_all)[['age:eligibleTRUE']])
-                                    + (cutoff^2 * coef(model_A_quad_all)[['eligibleTRUE:I(age^2)']]),
-                                  coef(model_A_cubic_all)[['eligibleTRUE']]
-                                    + (cutoff * coef(model_A_cubic_all)[['age:eligibleTRUE']])
-                                    + (cutoff^2 * coef(model_A_cubic_all)[['eligibleTRUE:I(age^2)']])
-                                    + (cutoff^3 * coef(model_A_cubic_all)[['eligibleTRUE:I(age^3)']]),
-                                  diff(tapply(data_obs$y, INDEX = data_obs$eligible, FUN = mean))),
-        ` ` = c(rep(NA, 3),
-                       mean(data_full$y_1 - data_full$y_0))) %>% 
+        `Data within bandwidth` = c(coef_lm_bandwidth, coef_quad_bandwidth, coef_cubic_bandwidth, diff_bandwidth),
+        `All observable` = c(coef_lm_observable, coef_quad_observable, coef_cubic_observable, diff_observable),
+        ` ` = c(coef_lm_god, coef_quad_god, coef_cubic_god, diff_god)) %>% 
         knitr::kable(digits = 2, format = 'html') %>% 
         kableExtra::add_header_above(c("", "Observable data" = 2, 'All data' = 1)) %>% 
         kableExtra::kable_styling(

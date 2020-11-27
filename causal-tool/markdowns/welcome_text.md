@@ -1,16 +1,17 @@
 # Learning causal inference
-### Welcome
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. At imperdiet dui accumsan sit amet nulla facilisi morbi tempus. In ante metus dictum at tempor commodo ullamcorper a. Ornare lectus sit amet est placerat in egestas erat. Cras sed felis eget velit aliquet sagittis id consectetur purus. Turpis massa tincidunt dui ut.
+Causal inference is a topic that lends itself well to visualizing many of the core concepts. The goal of this webtool is to help build your intuition for key causal inference concepts via visualization. The tool attempts to follow a 'first principles' path by first describing the fundamental problem of causal inference and why randomization is often necessary. From there, visualizations of treatment effects, propensity scores, and regression discontinuity are included. All rely heavily on interaction, simulation, and visualization. The tool's components are independent of each other but they generally progress in complexity from left-to-right. 
 
-Purus gravida quis blandit turpis. Nisi est sit amet facilisis magna. Tortor aliquam nulla facilisi cras fermentum odio eu. Aliquet nec ullamcorper sit amet risus nullam eget felis eget. Volutpat ac tincidunt vitae semper quis lectus nulla at volutpat. Ultricies integer quis auctor elit. Nulla porttitor massa id neque aliquam vestibulum. Et pharetra pharetra massa massa. Praesent elementum facilisis leo vel. Nulla aliquet porttitor lacus luctus accumsan. Orci sagittis eu volutpat odio facilisis mauris sit amet massa.
+It is not comprehensive. For more information on learning causal inference, try the following resources:
+- [Regression and Other Stories](https://avehtari.github.io/ROS-Examples/)
+- [Nick Huntington-Klein's blog post illustrating causal inference](http://nickchk.com/causalgraphs.html)
+- ...
+
+### Why is causal inference important?
 
 Ut faucibus pulvinar elementum integer enim neque volutpat ac tincidunt. Tempor orci eu lobortis elementum. Curabitur gravida arcu ac tortor dignissim convallis aenean et. Sed risus pretium quam vulputate dignissim suspendisse in est ante. Sed odio morbi quis commodo odio aenean.
 
-Elementum pulvinar etiam non quam lacus. Eros donec ac odio tempor orci. Pretium viverra suspendisse potenti nullam ac tortor vitae. Eros donec ac odio tempor orci dapibus ultrices in. Etiam erat velit scelerisque in dictum non. Sed viverra tellus in hac habitasse. Quis risus sed vulputate odio ut enim blandit volutpat maecenas. Tellus id interdum velit laoreet id donec ultrices tincidunt arcu. Imperdiet nulla malesuada pellentesque elit eget. Commodo sed egestas egestas fringilla phasellus faucibus scelerisque eleifend.
+
+***
 
 The source code for this tool can be found on [Github](https://github.com/joemarlo/causal-tool).
-
-<br>
-<br>
-<br>

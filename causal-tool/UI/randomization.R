@@ -1,7 +1,7 @@
 UI_randomization <- tabPanel(title = "Randomization",
          sidebarLayout(
            sidebarPanel(
-             width = 4,
+             width = 5,
              h3("Why do we randomize?"),
              h5("Randomization balances groups on both observed and unobserved characteristics. See this for yourself. First set the x and y variables to observe."),
              br(),
@@ -34,7 +34,7 @@ UI_randomization <- tabPanel(title = "Randomization",
              HTML('</details><br>')
            ),
            mainPanel(
-             width = 6,
+             width = 7,
              plotOutput('randomization_plot',
                         click = "randomization_plot_click"),
              br(),

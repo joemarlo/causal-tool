@@ -1,7 +1,7 @@
 UI_regression_discontinuity <- tabPanel(title = "Regression discontinuity",
          sidebarLayout(
            sidebarPanel(
-             width = 4,
+             width = 5,
              h3("Regression discontinuity"),
              h5("Regression discontinuity design is a special case of an observational study where treatment is assigned solely based on an X variable (in this example `Age`). The observations are split into groups based on a cutoff value, and treatment is assigned to one of these groups."),
              h5("In this hypothetical example we're going to envision a drug study where participants are given the experimental drug only if they are over a certain age cutoff. The outcome variable is a general measure of `health`."),
@@ -82,7 +82,7 @@ UI_regression_discontinuity <- tabPanel(title = "Regression discontinuity",
                )
              )),
            mainPanel(
-             width = 6,
+             width = 7,
              tabsetPanel(
                id = 'disc_tabs',
                type = 'tabs',

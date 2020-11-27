@@ -10,8 +10,8 @@ shinyUI(fluidPage(
     
     # set top left title
     titlePanel(
-        title = h1("NYU Causal Inference"),
-        windowTitle = "NYU Causal"
+        title = h1("Causal Inference"),
+        windowTitle = "Causal Inference"
     ),
     
     # initiate shinyjs
@@ -20,6 +20,7 @@ shinyUI(fluidPage(
     # prevents flickering on plot refresh
     tags$style(type="text/css", "#output_id.recalculating { opacity: 1.0; }"),
     
+    # overall UI structure
     navbarPage(
         title = 'NYU',
         id = "nav",
