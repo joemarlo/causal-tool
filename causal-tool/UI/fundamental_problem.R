@@ -8,7 +8,7 @@ UI_fundamental_problem <- tabPanel(title = "Fundamental problem",
                         width = 4,
                         h3("What is the fundamental problem of causal inference?"),
                         h5("Causal inference is fundamentally a missing data problem. We can only observe one potential outcome. We see that the person either receives the treatment or doesn't receive the treatment."),
-                        h5("For example, if a person smokes, will they have a heart attack?"),
+                        h5("For example, if a person smokes, will they have a heart disease?"),
                       ),
                       mainPanel(width = 6,
                                 plotOutput("fundamental_plot_one"))
@@ -18,7 +18,7 @@ UI_fundamental_problem <- tabPanel(title = "Fundamental problem",
                       sidebarPanel(
                         width = 4,
                         h3("What is the fundamental problem of causal inference?"),
-                        h5("But what if they didn't smoke, would they still have a heart attack?"),
+                        h5("But what if they didn't smoke, would they still have a heart disease?"),
                       ),
                       mainPanel(width = 6,
                                 plotOutput("fundamental_plot_two"))
@@ -28,7 +28,7 @@ UI_fundamental_problem <- tabPanel(title = "Fundamental problem",
                       sidebarPanel(
                         width = 4,
                         h3("What is the fundamental problem of causal inference?"),
-                        h5("Seeing both outcomes, heart attack and no heart attack, is impossible. This is the observed outcome and one potential counterfactual.")
+                        h5("Seeing both outcomes, heart disease and no heart disease, is impossible. This is the observed outcome and one potential counterfactual.")
                       ),
                       mainPanel(width = 6,
                                 plotOutput("fundamental_plot_three"))

@@ -34,7 +34,7 @@ shinyServer(function(input, output, session) {
 
   output$fundamental_plot_one <- renderPlot({
     
-    tibble(label = c('Heart\nattack', 'Smokes'),
+    tibble(label = c('Heart\ndisease', 'Smokes'),
            x = c(0, 1),
            y = c(0, 1)) %>% 
       ggplot(aes(x = x, y = y)) +
@@ -54,7 +54,7 @@ shinyServer(function(input, output, session) {
   
   output$fundamental_plot_two <- renderPlot({
     
-    tibble(label = c('No heart\nattack', 'Does not\nsmoke'),
+    tibble(label = c('No heart\ndisease', 'Does not\nsmoke'),
            x = c(0, -1),
            y = c(0, 1)) %>% 
       ggplot(aes(x = x, y = y)) +
@@ -73,7 +73,7 @@ shinyServer(function(input, output, session) {
   
   output$fundamental_plot_three <- renderPlot({
     
-    tibble(label = c('Smokes', 'Heart\nattack', 'Does not\nsmoke', 'No heart\n attack'),
+    tibble(label = c('Smokes', 'Heart\ndisease', 'Does not\nsmoke', 'No heart\ndisease'),
            x = c(-1, -1, 1, 1),
            y = c(-1, -2, -1, -2)) %>% 
       ggplot(aes(x = x, y = y)) +
@@ -98,7 +98,7 @@ shinyServer(function(input, output, session) {
   
   output$fundamental_plot_four <- renderPlot({
     
-    tibble(label = c('Cholesterol', 'Age', 'Smokes', 'Genetics', 'Heart\nattack'),
+    tibble(label = c('Cholesterol', 'Age', 'Smokes', 'Genetics', 'Heart\ndisease'),
            x = c(0, 0, -1, -1, 1),
            y = c(0, 1, -0, -1, 0)) %>% 
       ggplot(aes(x = x, y = y)) +
@@ -881,6 +881,8 @@ shinyServer(function(input, output, session) {
         (cutoff^3 * coef(model_cubic_god)[['eligibleTRUE:I(age^3)']])
       diff_god <- mean(data_full$y_1 - data_full$y_0)
       
+      # which row is currently selected by the user in the 'modeled relationship' dropdown
+      selected_row <- match(input$disc_select_model, c("Linear", "Polynomial - quadratic", "Polynomial - cubic"))
       
       # summary table
       estimates <- tibble(
@@ -891,8 +893,10 @@ shinyServer(function(input, output, session) {
         knitr::kable(digits = 2, format = 'html') %>% 
         kableExtra::add_header_above(c("", "Observable data" = 2, 'All data' = 1)) %>% 
         kableExtra::kable_styling(
-          bootstrap_options = c("striped", "hover", "condensed")
-        )
+          bootstrap_options = c("hover", "condensed")
+        ) %>% 
+        kableExtra::row_spec(row = selected_row, bold = TRUE, 
+                             italic = TRUE, background = '#ebebfa')
 
     return(estimates)
     
