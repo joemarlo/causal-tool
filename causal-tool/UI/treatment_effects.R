@@ -1,9 +1,6 @@
-UI_treatment_effects <- tabPanel(
+UI_treatment_effects <- navbarMenu(
   title = "Treatment effects",
-  navlistPanel(
-    id = "fundamental_nav",
-    widths = c(1, 11),
-    tabPanel("1)",
+  tabPanel("Estimating treatment effects",
       sidebarLayout(
         sidebarPanel(
              width = 5,
@@ -25,37 +22,37 @@ UI_treatment_effects <- tabPanel(
                  "Data generation process",
                  br(),
                  sliderInput(
-                   inputId = "means_select_n",
-                   label = "n:",
-                   value = 500,
-                   min = 100,
-                   max = 1000,
-                   step = 50
-                 ),
-                 sliderInput(
                    inputId = "means_select_tau",
                    label = "Tau:",
                    value = 3,
                    min = 0,
-                   max = 100,
+                   max = 20,
                    step = 1
+                 ),
+                 sliderInput(
+                   inputId = "means_slider_error",
+                   label = "Error:",
+                   value = 3,
+                   min = 0,
+                   max = 10,
+                   step = 1
+                 ),
+                 sliderInput(
+                   inputId = "means_select_n",
+                   label = "n:",
+                   value = 250,
+                   min = 100,
+                   max = 1000,
+                   step = 50
                  ),
                  sliderInput(
                    inputId = "means_select_slope",
                    label = "Slope:",
                    value = 1.1,
                    min = 0,
-                   max = 10,
+                   max = 1,
                    step = 0.1
                  ),
-                 sliderInput(
-                   inputId = "means_slider_error",
-                   label = "Error:",
-                   value = 2,
-                   min = 0,
-                   max = 10,
-                   step = 1
-                 )
                ),
                tabPanel(
                  "Animation options",
@@ -79,9 +76,9 @@ UI_treatment_effects <- tabPanel(
                      label = "Estimating SATE frame:",
                      value = 1,
                      min = 1,
-                     max = 20,
+                     max = 26,
                      step = 1,
-                     animate = animationOptions(interval = 125, loop = FALSE)
+                     animate = animationOptions(interval = 200, loop = FALSE)
                    )
                  ),
                  tags$div(
@@ -133,7 +130,7 @@ UI_treatment_effects <- tabPanel(
                              {$('#div_means_slider_frame_est_SATE .slider-animate-button').click()};
                              });"
                         )), 
-               tabPanel("Regression",
+               tabPanel("[Regression]",
                         plotOutput('means_plot_regression', height = 500),
                         br(),
                         actionButton(inputId = "means_button_play_regression",
@@ -152,7 +149,7 @@ UI_treatment_effects <- tabPanel(
            )
          )
     ),
-      tabPanel("2)",
+      tabPanel("Efficiency and bias",
           sidebarLayout(
             sidebarPanel(
               width = 5,
@@ -160,15 +157,19 @@ UI_treatment_effects <- tabPanel(
               h5("Regression results in much more efficient estimates. Playing statistics god, we can see how the observed outcomes and estimates change if we relabel the treatment assignment n amount of times. This is a randomization distribution. We then calculate SATE and the regression estimate for each of these n simulations."),
               h5('You can think of this simulation process as repetitively taking samples of the same dataset, but each time randomly assigning treatment to a new group of observations and estimating the treatment effect from the resulting groups.'),
               h5("The resulting plot shows how the regression estimate is unbiased for SATE and the variance of the distribution is much smaller (i.e. more efficient)."),
-              h5("This dynamic holds with even as few as 100 simulations but it differs as slope and error changes. Play with 'Data generation process' settings on the previous tab to see how it affects the simulation results."),
+              h5("This dynamic holds with even as few as 100 simulations but it differs as slope and error changes. Play with 'Data generation process' settings on the 'Estimating treatment effects' page to see how it affects the simulation results."),
               br(),
               sliderInput(
                 inputId = 'means_slider_n_sims',
                 label = "n simulations:",
                 value = 500,
                 min = 100,
-                max = 1000,
+                max = 5000,
                 step = 100
+              ),
+              actionButton(
+                inputId = 'means_button_run_sim',
+                label = 'Run simulation'
               )
             ),
             mainPanel(
@@ -176,12 +177,11 @@ UI_treatment_effects <- tabPanel(
               tabsetPanel(
                 id = "means_tabs",
                 type = "tabs",
-                tabPanel("Randomization distribution",
-                         plotOutput("means_plot_bias", height = 500)),
-                tabPanel("[Sampling distribution]")
+                tabPanel("Efficiency",
+                         plotOutput("means_plot_efficiency", height = 500)),
+                tabPanel("[Bias]")
               )
             )
           )
       )
-    )         
 )

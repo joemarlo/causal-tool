@@ -122,23 +122,32 @@ shinyServer(function(input, output, session) {
     selected_points <- reactiveValues(row_names = NULL)
     
     observeEvent(input$randomization_plot_click, {
+      
+      # for each click on the plot, add or remove that data point from the list
+      #   of selected data points
+      
+      tryCatch({
+        # capture the point form the user click
+        event_row <- rownames(
+          nearPoints(
+              master_df,
+              input$randomization_plot_click,
+              threshold = 15,
+              maxpoints = 1
+            )
+          )
         
-        # for each click on the plot, add or remove that data point from the list
-        #   of selected data points
-        
-        tryCatch({
-            event_car <- rownames(nearPoints(master_df, input$randomization_plot_click, threshold = 15, maxpoints = 1))
-            if (event_car %in% selected_points$row_names){
-              # remove point from selected list  
-              selected_points$row_names <- setdiff(selected_points$row_names, event_car)
-            } else if (event_car %in% rownames(master_df)) {
-              # add point to selected list  
-              selected_points$row_names <- c(selected_points$row_names, event_car)
-              # remove floating UI box
-              removeUI(selector = "#randomization_floating_box")
-            }},
-            error = function(e) e
-        )
+        if (event_row %in% selected_points$row_names) {
+          # remove point from selected list
+          selected_points$row_names <- setdiff(selected_points$row_names, event_row)
+        } else if (event_row %in% rownames(master_df)) {
+          # add point to selected list
+          selected_points$row_names <- c(selected_points$row_names, event_row)
+          # remove floating UI box
+          removeUI(selector = "#randomization_floating_box")
+        }
+      },
+      error = function(e) e)
       
     })
     
@@ -236,87 +245,16 @@ shinyServer(function(input, output, session) {
             bootstrap_options = c("striped", "hover", "condensed")
           )
     })  
-        
-    render_frames <- reactive({
-      # calculate the points in each frame for the animation
-      # interpolate the points between the frames
-      # returns a dataset with identifiers for each frame
-      
-      # get the data
-      dat <- DGP()
-      
-      # create second frame by summarize the y axis
-      frame_two <- dat %>%
-        mutate(y_0 = mean(y_0),
-               y_1 = mean(y_1)) %>% 
-        ungroup()
-      
-      # create third frame
-      frame_three <- frame_two %>% 
-        mutate(x = mean(x))  
-      
-      # interpolate between first and second frames
-      one_to_two <- map_df(1:nrow(dat), function(i){
-        interp_x <- approx(
-          x = c(dat$x[[i]], frame_two$x[[i]]),
-          n = 15,
-          ties = 'ordered'
-        )$y
-        
-        interp_y0 <- approx(
-          x = c(dat$y_0[[i]], frame_two$y_0[[i]]),
-          n = 15,
-          ties = 'ordered'
-        )$y
-        
-        interp_y1 <- approx(
-          x = c(dat$y_1[[i]], frame_two$y_1[[i]]),
-          n = 15,
-          ties = 'ordered'
-        )$y
-        
-        tibble(x = interp_x, y_0 = interp_y0, y_1 = interp_y1, 
-               frame = 1:15, index = i)
-      })
-      
-      # interpolate between second and third frames
-      two_to_three <- map_dfr(1:nrow(frame_two), function(i){
-        interp_x <- approx(
-          x = c(frame_two$x[[i]], frame_three$x[[i]]),
-          n = 5,
-          ties = 'ordered'
-        )$y
-        
-        interp_y0 <- approx(
-          x = c(frame_two$y_0[[i]], frame_three$y_0[[i]]),
-          n = 5,
-          ties = 'ordered'
-        )$y
-        
-        interp_y1 <- approx(
-          x = c(frame_two$y_1[[i]], frame_three$y_1[[i]]),
-          n = 5,
-          ties = 'ordered'
-        )$y
-        
-        tibble(x = interp_x, y_0 = interp_y0, y_1 = interp_y1, 
-               frame = 16:20, index = i)
-      })
-      
-      # combine and add z back in based on the index
-      interp_data <- one_to_two %>% 
-        bind_rows(two_to_three) %>% 
-        left_join(dat %>% select(index, z, Y), by = 'index')
-
-      return(interp_data)
-    })
     
+    # render the frames for SATE    
+    render_frames_reactive <- reactive(render_frames(dat = DGP()))
+
     # plot the interpolating data but only render the frame
       # according to the slider input
     output$means_plot_SATE <- renderPlot({
       
       # get data and filter to just one frame
-      dat_all <- render_frames()
+      dat_all <- render_frames_reactive()
       dat <- dat_all %>% filter(frame == input$means_slider_frame_SATE) 
       
       # plot it
@@ -326,7 +264,8 @@ shinyServer(function(input, output, session) {
         geom_point(aes(x = x, y = value, fill = name),
                    shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 0.3) + 
         coord_cartesian(xlim = range(dat_all$x), ylim = range(c(dat_all$y_0, dat_all$y_1))) +
-        labs(x = 'x',
+        labs(title = "An all-seeing entity's perspective: all the data",
+             x = 'x',
              y = 'y',
              fill = NULL)
       
@@ -347,25 +286,68 @@ shinyServer(function(input, output, session) {
     
     # plot the interpolating data but only render the frame
     # according to the slider input
+    # TODO fix legend labels
     output$means_plot_est_SATE <- renderPlot({
-      
+
       # get data and filter to just one frame
-      dat_all <- render_frames()
-      dat <- dat_all %>% filter(frame == input$means_slider_frame_est_SATE) 
+      dat_all <- render_frames_reactive()
+
+      # filter the interpolated data to just the observable data
+      all_frames <- dat_all %>% 
+        pivot_longer(cols = c('y_0', 'y_1')) %>% 
+        filter((z == 0 & name == 'y_0') | (z == 1 & name == 'y_1')) %>%  
+        mutate(frame = frame + 6)
       
-      # plot it
-      p <- dat %>%
-        pivot_longer(cols = c("y_0", "y_1")) %>% 
-        ggplot() +
-        geom_point(aes(x = x, y = value, fill = name),
-                   shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 0.3) + 
-        coord_cartesian(xlim = range(dat_all$x), ylim = range(c(dat_all$y_0, dat_all$y_1))) +
-        labs(x = 'x',
-             y = 'y',
-             fill = NULL)
+      # plot the first two frames
+      if (input$means_slider_frame_est_SATE %in% 1:2){
+        p <- dat_all %>% 
+          filter(frame == 1) %>% 
+          pivot_longer(cols = c("y_0", "y_1")) %>% 
+          ggplot() +
+          geom_point(aes(x = x, y = value, fill = name),
+                     shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 0.3) + 
+          coord_cartesian(xlim = range(dat_all$x), ylim = range(c(dat_all$y_0, dat_all$y_1))) +
+          labs(title = "The researcher's perspective: only the observable data",
+               x = 'x',
+               y = 'y',
+               fill = NULL)
+      }
       
+      # plot the intermediary frames highlighting the observable data
+      if (input$means_slider_frame_est_SATE %in% 2:6){
+        p <- dat_all %>% 
+          filter(frame == 1) %>% 
+          pivot_longer(cols = c("y_0", "y_1")) %>% 
+          mutate(observable = Y == value) %>% 
+          ggplot() +
+          geom_point(aes(x = x, y = value, fill = name, alpha = observable),
+                     shape = 21, size = 3, stroke = 1) +
+          coord_cartesian(xlim = range(dat_all$x), ylim = range(c(dat_all$y_0, dat_all$y_1))) +
+          labs(title = "The researcher's perspective: only the observable data",
+               x = 'x',
+               y = 'y',
+               fill = NULL)
+      }
+      
+      # plot the rest of the frames
+      if (input$means_slider_frame_est_SATE >= 7){
+        p <- all_frames %>% 
+          filter(frame == input$means_slider_frame_est_SATE) %>%
+          ggplot() +
+          geom_point(aes(x = x, y = value, fill = as.logical(z)),
+                     shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 0.9) +
+          coord_cartesian(xlim = range(dat_all$x), ylim = range(c(dat_all$y_0, dat_all$y_1))) +
+          labs(title = "The researcher's perspective: only the observable data",
+               x = 'x',
+               y = 'y',
+               fill = NULL)
+        
+      }
+ 
       # on the last frame, add error bars to highlight difference in points
-      if (input$means_slider_frame_est_SATE == 20){
+      if (input$means_slider_frame_est_SATE == 26){
+
+        dat <- dat_all %>% filter(frame == max(frame))
         
         SATE_est <- round(mean(dat$Y[dat$z == 1]) - mean(dat$Y[dat$z == 0]), 2)
         bar_position <- tibble(x = mean(dat$x) + 1, ymin = mean(dat$y_0),
@@ -377,60 +359,65 @@ shinyServer(function(input, output, session) {
                    label = paste0("Difference in means: ", SATE_est),
                    hjust = 0, size = 5)
       }
-      
+
       return(p)
     })
     
-    
+    # regression plot
     output$means_plot_regression <- renderPlot({
       DGP() %>% 
         pivot_longer(cols = c('y_0', 'y_1')) %>% 
         ggplot(aes(x = x, y = value, color = name, fill = name)) +
         geom_point(shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 0.3) + 
-        geom_smooth(method = 'lm', formula = y ~ x)
+        geom_smooth(method = 'lm', formula = y ~ x) +
+        labs(title = "The researcher's perspective: only the observable data",
+             x = 'x',
+             y = 'y')
     })
   
-    
-    output$means_plot_bias <- renderPlot({
-      
-      dat <- DGP()
-      n_sims <- input$means_slider_n_sims
-      n <- input$means_select_n
-
-      # run simulation, shuffling the treatment label each time
-      sims <- map_dfr(1:n_sims, function(i){
+    # build efficiency plot when user clicks run simulation
+    observeEvent(input$means_button_run_sim, {
+      output$means_plot_efficiency <- renderPlot({
         
-        # randomly assign treatment status to each individual
-        dat$z <- rbinom(n = n, size = 1, p = 0.5)
+        dat <- isolate(DGP())
+        n_sims <- isolate(input$means_slider_n_sims)
+        n <- isolate(input$means_select_n)
+  
+        # run simulation, shuffling the treatment label each time
+        sims <- map_dfr(1:n_sims, function(i){
+          
+          # randomly assign treatment status to each individual
+          dat$z <- rbinom(n = n, size = 1, p = 0.5)
+          
+          # overwrite Y with new 'observed' values
+          dat$Y <- (dat$y_0 * -(dat$z - 1)) + (dat$y_1 * dat$z)
+          
+          # estimate the treatment effect
+          SATE_est <- mean(dat$Y[dat$z == 1]) - mean(dat$Y[dat$z == 0])
+          reg <- coef(lm(Y ~ x + z, data = dat))[['z']]
+          
+          return(tibble(`SATE estimate` = SATE_est, `Regression estimate` = reg, ID = i))
+        })
         
-        # overwrite Y with new 'observed' values
-        dat$Y <- (dat$y_0 * -(dat$z - 1)) + (dat$y_1 * dat$z)
-        
-        # estimate the treatment effect
-        SATE_est <- mean(dat$Y[dat$z == 1]) - mean(dat$Y[dat$z == 0])
-        reg <- coef(lm(Y ~ x + z, data = dat))[['z']]
-        
-        return(tibble(`SATE estimate` = SATE_est, `Regression estimate` = reg, ID = i))
+        # calculate mean per estimator
+        group_means <- sims %>%
+          pivot_longer(cols = -ID) %>% 
+          group_by(name) %>% 
+          summarize(mean = mean(value, na.rm = TRUE),
+                    .groups = 'drop')
+  
+        # plot it
+        sims %>% 
+          pivot_longer(cols = -ID) %>% 
+          ggplot(aes(x = value, fill = name)) +
+          geom_density(alpha = 0.5) +
+          geom_vline(data = group_means, aes(xintercept = mean, color = name)) +
+          guides(color = FALSE) +
+          labs(x = NULL,
+               y = NULL,
+               fill = NULL)
+  
       })
-      
-      # calculate mean per estimator
-      group_means <- sims %>%
-        pivot_longer(cols = -ID) %>% 
-        group_by(name) %>% 
-        summarize(mean = mean(value, na.rm = TRUE),
-                  .groups = 'drop')
-
-      # plot it
-      sims %>% 
-        pivot_longer(cols = -ID) %>% 
-        ggplot(aes(x = value, fill = name)) +
-        geom_density(alpha = 0.5) +
-        geom_vline(data = group_means, aes(xintercept = mean, color = name)) +
-        guides(color = FALSE) +
-        labs(x = NULL,
-             y = NULL,
-             fill = NULL)
-
     })
     
 
@@ -761,17 +748,28 @@ shinyServer(function(input, output, session) {
         p <- p +
           geom_smooth(data = dat_cut, color = 'grey10',
                       method = 'lm', formula = y ~ poly(x, 3, raw = TRUE))
-      }
+      } else if (input$disc_select_model == 'Difference in means'){
+
+        # calculate mean per eligibility group
+        mean_eligible_0 <- mean(data_obs[data_obs$eligible == 0 & data_obs$age >= min_age & data_obs$age <= max_age, 'y'])
+        mean_eligible_1 <- mean(data_obs[data_obs$eligible == 1 & data_obs$age >= min_age & data_obs$age <= max_age, 'y'])
+        
+        p <- p +
+          geom_segment(data = tibble(x = min_age, xend = cutoff, y = mean_eligible_0, yend = mean_eligible_0),
+                    inherit.aes = FALSE,
+                    aes(x = x, xend = xend, y = y, yend = yend), 
+                    size = 1.1, color = 'grey10') +
+          geom_segment(data = tibble(x = cutoff, xend = max_age, y = mean_eligible_1, yend = mean_eligible_1),
+                       inherit.aes = FALSE,
+                       aes(x = x, xend = xend, y = y, yend = yend),
+                       size = 1.1, color = 'grey10')
+    }
       
       return(p)
     })
     
     # all-seeing plot
     output$disc_plot_all <- renderPlot({
-      
-      cutoff <- input$disc_numeric_cutoff 
-      min_age <- cutoff - (input$disc_numeric_window / 2)
-      max_age <- cutoff + (input$disc_numeric_window / 2)
       
       data_full <- disc_data()[['full']]
 
@@ -805,6 +803,27 @@ shinyServer(function(input, output, session) {
           geom_smooth(color = 'grey10', method = 'lm', 
                       formula = y ~ poly(x, 3, raw = TRUE))
       }
+      
+     if (input$disc_select_model == 'Difference in means'){
+
+       # calculate min and max ages for plotting
+       min_age <- min(data_full$age, na.rm = TRUE)
+       max_age <- max(data_full$age, na.rm = TRUE)
+       
+       # calculate mean per eligibility group
+       mean_eligible_0 <- mean(data_full$y_0, na.rm = TRUE)
+       mean_eligible_1 <- mean(data_full$y_1, na.rm = TRUE)
+       
+       p <- p +
+         geom_segment(data = tibble(x = min_age, xend = max_age, y = mean_eligible_0, yend = mean_eligible_0),
+                     inherit.aes = FALSE,
+                     aes(x = x, xend = xend, y = y, yend = yend),
+                     size = 1.1, color = 'grey10') +
+         geom_segment(data = tibble(x = min_age, xend = max_age, y = mean_eligible_1, yend = mean_eligible_1),
+                     inherit.aes = FALSE,
+                     aes(x = x, xend = xend, y = y, yend = yend),
+                     size = 1.1, color = 'grey10')
+    }
       
       return(p)
     })
@@ -882,7 +901,7 @@ shinyServer(function(input, output, session) {
       diff_god <- mean(data_full$y_1 - data_full$y_0)
       
       # which row is currently selected by the user in the 'modeled relationship' dropdown
-      selected_row <- match(input$disc_select_model, c("Linear", "Polynomial - quadratic", "Polynomial - cubic"))
+      selected_row <- match(input$disc_select_model, c("Linear", "Polynomial - quadratic", "Polynomial - cubic", 'Difference in means'))
       
       # summary table
       estimates <- tibble(

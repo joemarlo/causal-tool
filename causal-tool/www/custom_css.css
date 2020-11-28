@@ -4,7 +4,7 @@ body {
   padding: 5px 20px 20px 5px;
   font-family: "Roboto", Helvetica, Arial, sans-serif;
   color: #636363;
-  font-weight: 350;
+  font-weight: 300;
 }
 
 /* headers */
@@ -57,6 +57,20 @@ summary{
   color: #fff;
   background-color: #5c5980;
 }
+
+/* nav dropdowns */
+.dropdown-menu > li > a {
+  color: #525252;
+  font-weight: 300;
+}
+
+.dropdown-menu > li.active > a,
+.dropdown-menu > li.active > a:hover,
+.dropdown-menu > li.active > a:focus {
+  color: #fff;
+  background-color: #5c5980;
+}
+
 
 /* navigation pills on the left side */
 .nav-pills > li > a {

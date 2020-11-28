@@ -1,4 +1,6 @@
-UI_propensity_scores <- tabPanel(title = "Propensity scores",
+UI_propensity_scores <- navbarMenu(
+  title = 'Propensity scores',
+  tabPanel(title = "Propensity scores and matching",
          sidebarLayout(
            sidebarPanel(
              width = 5,
@@ -58,18 +60,35 @@ UI_propensity_scores <- tabPanel(title = "Propensity scores",
            mainPanel(
              width = 7,
              tabsetPanel(
-               id = "upload_tabs",
+               id = "propensity_tabs_scores",
                type = "tabs",
                tabPanel("Propensity scores",
-                        # tableOutput('p_score_table')),
                         br(),
                         plotOutput('propensity_plot_scores',
                                    brush = 'propensity_plot_scores_brush')),
                tabPanel("Matching",
                         br(),
                         plotOutput("propensity_plot_matching", height = 300)
-               ),
-               tabPanel("[Overlap and balance]")
+               )
              )
            )
-         ))
+         )),
+  tabPanel(title = "[Overlap and balance]",
+           sidebarLayout(
+             sidebarPanel(
+               width = 5,
+               h3("Assessing overlap and balance"),
+               h5("The goal is to have empirical counterfactuals for each member of our treatment group (for ATT) or control group (for ATE). This can be assessed by plotting the propensity scores for each group and assessing the overlap. If there isn't sufficient overlap, then we can surmise the two groups are too different to be compared."),
+               br()
+             ),
+             mainPanel(
+               width = 7,
+               tabsetPanel(
+                 id = "propensity_tabs_overlap",
+                 type = "tabs",
+                 tabPanel("[Overlap]"),
+                 tabPanel("[Balance]")
+               )
+             )
+           ))
+)

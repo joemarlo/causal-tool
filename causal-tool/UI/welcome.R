@@ -7,6 +7,6 @@ UI_welcome <- tabPanel(title = "Welcome",
                            plotOutput('welcome_plot', height = 500),
                            br(),
                            actionButton(inputId = 'welcome_button_update_plot',
-                                        label = "Refresh plot")
+                                        label = "Get next plot")
                          )
                        ))

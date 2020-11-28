@@ -18,7 +18,7 @@ shinyUI(fluidPage(
     useShinyjs(),
 
     # prevents flickering on plot refresh
-    tags$style(type="text/css", "#output_id.recalculating { opacity: 1.0; }"),
+    tags$style(type="text/css", ".recalculating { opacity: 1.0; }"),
     
     # overall UI structure
     navbarPage(
