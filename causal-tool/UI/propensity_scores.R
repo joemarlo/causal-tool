@@ -5,8 +5,10 @@ UI_propensity_scores <- navbarMenu(
            sidebarPanel(
              width = 5,
              h3("Propensity scores are the probability that an observation is assigned to treatment based on the observed covariates"),
-             h5("The scores can reduce selection bias and constrain inference to areas of common support."),
-             h5("In order to illustrate the mechanism, let's first set treatment as either random or a function of the covariates."),
+             h5("The scores can reduce selection bias and allow us to constrain inference to areas of common support."),
+             h5("In order to illustrate the mechanism, let's first set treatment as either random or a function of the covariates. Unequal distributions indicate that the observations one group may have higher probability of being selected into treatment."),
+             h5("Second, see how the scores change by adjusting the covariates that determine treatment and independent variables within the model"),
+             h5("Third, cycle through the matching types to visualize how each each treatment observation is matched to a control observations"),
              br(),
              tabsetPanel(
                id = 'propensity_tabs_left',
@@ -73,8 +75,8 @@ UI_propensity_scores <- navbarMenu(
                type = "tabs",
                tabPanel("Propensity scores",
                         br(),
-                        plotOutput('propensity_plot_scores',
-                                   brush = 'propensity_plot_scores_brush')),
+                        plotOutput('propensity_plot_scores')),
+                                   # brush = 'propensity_plot_scores_brush')),
                tabPanel("Matching",
                         br(),
                         plotOutput("propensity_plot_matching", height = 300)

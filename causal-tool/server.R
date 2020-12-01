@@ -645,9 +645,9 @@ shinyServer(function(input, output, session) {
                   fill = 'grey70', alpha = 0.2) +
         geom_point(shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 1) +
         scale_x_continuous(limits = 0:1) +
-        scale_y_discrete(drop = FALSE) +
+        scale_y_discrete(drop = FALSE, labels = c("", "Control", "Treatment", "")) +
         coord_cartesian(ylim = c(2, 3)) +
-        labs(title = 'The arrows show how the treatment observations are matched to the control observations',
+        labs(title = "The control observations within each treatment observations' 'band' are matched to that treatment observation.",
              x = 'Propensity score',
              y = NULL,
              fill = NULL)
