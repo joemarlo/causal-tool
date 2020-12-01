@@ -1,5 +1,6 @@
 UI_propensity_scores <- navbarMenu(
   title = 'Propensity scores',
+  tabPanel(title = "[Observational studies]"),
   tabPanel(title = "Propensity scores and matching",
          sidebarLayout(
            sidebarPanel(
@@ -79,7 +80,7 @@ UI_propensity_scores <- navbarMenu(
                                    # brush = 'propensity_plot_scores_brush')),
                tabPanel("Matching",
                         br(),
-                        plotOutput("propensity_plot_matching", height = 300)
+                        plotOutput("propensity_plot_matching", height = 400)
                )
              )
            )

@@ -384,9 +384,11 @@ shinyServer(function(input, output, session) {
     # define the data generating process generations using the predefined module
     DGP_EB <- dgpServer(id = "means_EB_")
 
-    # build efficiency plot when user clicks run simulation
+    
     observeEvent(input$means_EB_button_run_sim, {
-      output$means_EB_plot_efficiency <- renderPlot({
+      
+      # build randomization distribution plot when user clicks run simulation
+      output$means_efficiency_plot_randomization <- renderPlot({
         
         dat <- isolate(DGP_EB())
         n_sims <- isolate(input$means_EB_slider_n_sims)
@@ -419,13 +421,181 @@ shinyServer(function(input, output, session) {
         sims %>% 
           pivot_longer(cols = -ID) %>% 
           ggplot(aes(x = value, fill = name)) +
-          geom_density(alpha = 0.5) +
+          geom_density(alpha = 0.7) +
           geom_vline(data = group_means, aes(xintercept = mean, color = name)) +
+          scale_fill_brewer(palette = 'Dark2') +
+          scale_color_brewer(palette = 'Dark2') +
           guides(color = FALSE) +
           labs(x = NULL,
                y = NULL,
                fill = NULL)
   
+      })
+
+      # build sampling distribution plot when user clicks run simulation
+      output$means_efficiency_plot_sampling <- renderPlot({
+        
+        n_sims <- isolate(input$means_EB_slider_n_sims)
+        
+        # run simulation, generating a new dataset each time
+        sims <- map_dfr(1:n_sims, function(i){
+          
+          # generate the data
+          dat <- isolate(dgpServer(id = "means_EB_")())
+          
+          # estimate the treatment effect
+          SATE_est <- mean(dat$Y[dat$z == 1]) - mean(dat$Y[dat$z == 0])
+          reg <- coef(lm(Y ~ x + z, data = dat))[['z']]
+          
+          return(tibble(`SATE estimate` = SATE_est, `Regression estimate` = reg, ID = i))
+        })
+        
+        # calculate mean per estimator
+        group_means <- sims %>%
+          pivot_longer(cols = -ID) %>% 
+          group_by(name) %>% 
+          summarize(mean = mean(value, na.rm = TRUE),
+                    .groups = 'drop')
+        
+        # plot it
+        sims %>% 
+          pivot_longer(cols = -ID) %>% 
+          ggplot(aes(x = value, fill = name)) +
+          geom_density(alpha = 0.7) +
+          geom_vline(data = group_means, aes(xintercept = mean, color = name)) +
+          scale_fill_brewer(palette = 'Dark2') +
+          scale_color_brewer(palette = 'Dark2') +
+          guides(color = FALSE) +
+          labs(x = NULL,
+               y = NULL,
+               fill = NULL)
+        
+      })
+    })
+    
+    # render the DGP pseudocode text
+    output$means_bias_DGP_formula <- renderText({
+      paste0(
+        'n = ', input$means_bias_select_n,
+        '<br>',
+        'smoker = rbinom(n, size = 1, prob = ', input$means_bias_slider_smoker, ')',
+        '<br>',
+        'probs = ifelse(smoker == 1, ', input$means_bias_slider_conditional, ', ', 1 - input$means_bias_slider_conditional, ')',
+        '<br>',
+        'z = rbinom(n, size = 1, p = probs)',
+        '<br>',
+        'y_0 = 10 + 0 + rnorm(n, mean = 0, sd = ', input$means_bias_slider_error, ')',
+        '<br>',
+        'y_1 = 10 + ', input$means_bias_select_tau, ' + ', input$means_bias_select_slope, ' * smoker + rnorm(n, mean = 0, sd = ', input$means_bias_slider_error, ')'
+      )
+    })
+    
+    observeEvent(input$means_bias_button_run_sim, {
+      
+      # build randomization distribution plot when user clicks run simulation
+      output$means_bias_plot_randomization <- renderPlot({
+        
+        # generate the data
+        dat <- isolate(
+          means_bias_DGP(
+            means_bias_select_n = input$means_bias_select_n,
+            means_bias_slider_smoker = input$means_bias_slider_smoker,
+            means_bias_slider_error = input$means_bias_slider_error,
+            means_bias_select_slope = input$means_bias_select_slope,
+            means_bias_select_tau = input$means_bias_select_tau,
+            means_bias_slider_conditional = input$means_bias_slider_conditional
+          )
+        )
+        n_sims <- isolate(input$means_bias_slider_n_sims)
+        n <- nrow(dat)
+        cond_pr <- isolate(input$means_bias_slider_conditional)
+        
+        # run simulation, shuffling the treatment label each time
+        sims <- map_dfr(1:n_sims, function(i){
+          
+          # randomly assign treatment but make it conditional on smoker status
+          probs <- ifelse(dat$smoker == 1, cond_pr, 1 - cond_pr)
+          dat$z <- rbinom(n = n, 1, p = probs)
+          
+          # overwrite Y with new 'observed' values
+          dat$Y <- (dat$y_0 * -(dat$z - 1)) + (dat$y_1 * dat$z)
+          
+          # estimate the treatment effect
+          SATE_est <- mean(dat$Y[dat$z == 1]) - mean(dat$Y[dat$z == 0])
+          reg <- coef(lm(Y ~ smoker + z, data = dat))[['z']]
+          
+          return(tibble(`SATE estimate` = SATE_est, `Regression estimate` = reg, ID = i))
+        })
+        
+        # calculate mean per estimator
+        group_means <- sims %>%
+          pivot_longer(cols = -ID) %>% 
+          group_by(name) %>% 
+          summarize(mean = mean(value, na.rm = TRUE),
+                    .groups = 'drop')
+        
+        # plot it
+        sims %>% 
+          pivot_longer(cols = -ID) %>% 
+          ggplot(aes(x = value, fill = name)) +
+          geom_density(alpha = 0.7) +
+          geom_vline(data = group_means, aes(xintercept = mean, color = name)) +
+          scale_fill_brewer(palette = 'Dark2') +
+          scale_color_brewer(palette = 'Dark2') +
+          guides(color = FALSE) +
+          labs(x = NULL,
+               y = NULL,
+               fill = NULL)
+        
+      })
+      
+      # build sampling distribution plot when user clicks run simulation
+      output$means_bias_plot_sampling <- renderPlot({
+        
+        n_sims <- isolate(input$means_bias_slider_n_sims)
+
+        # run simulation, generating a new dataset each time
+        sims <- map_dfr(1:n_sims, function(i){
+          
+          # generate the data
+          dat <- isolate(
+            means_bias_DGP(
+              means_bias_select_n = input$means_bias_select_n,
+              means_bias_slider_smoker = input$means_bias_slider_smoker,
+              means_bias_slider_error = input$means_bias_slider_error,
+              means_bias_select_slope = input$means_bias_select_slope,
+              means_bias_select_tau = input$means_bias_select_tau,
+              means_bias_slider_conditional = input$means_bias_slider_conditional
+            )
+          )
+                  
+          # estimate the treatment effect
+          SATE_est <- mean(dat$Y[dat$z == 1]) - mean(dat$Y[dat$z == 0])
+          reg <- coef(lm(Y ~ smoker + z, data = dat))[['z']]
+          
+          return(tibble(`SATE estimate` = SATE_est, `Regression estimate` = reg, ID = i))
+        })
+        
+        # calculate mean per estimator
+        group_means <- sims %>%
+          pivot_longer(cols = -ID) %>% 
+          group_by(name) %>% 
+          summarize(mean = mean(value, na.rm = TRUE),
+                    .groups = 'drop')
+        
+        # plot it
+        sims %>% 
+          pivot_longer(cols = -ID) %>% 
+          ggplot(aes(x = value, fill = name)) +
+          geom_density(alpha = 0.7) +
+          geom_vline(data = group_means, aes(xintercept = mean, color = name)) +
+          scale_fill_brewer(palette = 'Dark2') +
+          scale_color_brewer(palette = 'Dark2') +
+          guides(color = FALSE) +
+          labs(x = NULL,
+               y = NULL,
+               fill = NULL)
+        
       })
     })
     
@@ -563,7 +733,25 @@ shinyServer(function(input, output, session) {
         scores <- tibble(
           Z = master_df$treat,
           score = propensity_scores
-        )
+        ) %>% 
+          mutate(index = row_number())
+        
+        # split into one df for controls and one for treatment
+        groups <- scores %>% 
+          group_by(Z) %>% 
+          group_split()
+        
+        # check to see which control observation are within the caliper width of each treatment observation
+        matches <- map2_dfr(.x = groups[[2]]$score, .y = groups[[2]]$index, .f = function(treatment, index){
+          in_caliper <- (groups[[1]]$score >= (treatment - (input$propensity_slider_caliper / 2))) & 
+            (groups[[1]]$score <= (treatment + (input$propensity_slider_caliper / 2)))
+          matches <- groups[[1]]$score[in_caliper]
+          return(tibble(index = index, score_match = matches))
+        })
+        
+        # add matches back to scores df
+        scores <- scores %>% 
+          left_join(matches, by = 'index')
         
         return(scores)
         
@@ -590,7 +778,9 @@ shinyServer(function(input, output, session) {
     # plot of propensity score densities grouped by treatment status
     output$propensity_plot_scores <- renderPlot({
       # get propensity scores and calculate group means
-      dat <- p_scores() %>% mutate(Z = recode(Z, `1` = 'Treatment', `0` = "Control"))
+      dat <- p_scores() %>%
+        distinct(score, .keep_all = TRUE) %>%
+        mutate(Z = recode(Z, `1` = 'Treatment', `0` = "Control"))
       group_means <- dat %>% 
         group_by(Z) %>% 
         summarize(score = mean(score, na.rm = TRUE), 
@@ -626,28 +816,37 @@ shinyServer(function(input, output, session) {
                      size = 1.2, arrow = arrow(length = unit(0.06, "npc"))) +
         geom_point(shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 1) +
         scale_x_continuous(limits = 0:1) +
-        labs(title = 'The arrows show how the treatment observations are matched to the control observations',
+        labs(title = 'The arrows show how the treatment observations are matched to the control observations\n',
              x = 'Propensity score',
              y = NULL,
              fill = NULL)
       
     } else if (input$propensity_match_type_input == 'Radius matching'){
       
-      p_scores() %>% 
+      # pull data and add left and right points for plotting the geom_rect
+      dat <- p_scores() %>% 
         mutate(Z = recode(Z, `1` = 'Treatment', `0` = "Control"),
                Z = factor(Z, levels = c('Low', 'Control', 'Treatment', 'High')),
                left = ifelse(Z == 'Treatment', score - (input$propensity_slider_caliper/2), NA),
-               right = ifelse(Z == 'Treatment', score + (input$propensity_slider_caliper/2), NA)) %>%
+               right = ifelse(Z == 'Treatment', score + (input$propensity_slider_caliper/2), NA))
+      
+      dat %>% 
+        distinct(index, .keep_all = TRUE) %>%
         ggplot(aes(x = score, y = Z, fill = Z)) +
         geom_vline(aes(xintercept = left), alpha = 0.2) +
         geom_vline(aes(xintercept = right), alpha = 0.2) +
         geom_rect(aes(xmin = left, xmax = right, ymin = 'Low', ymax = 'High'),
-                  fill = 'grey70', alpha = 0.2) +
+                  fill = 'grey80', alpha = 0.1) +
+        geom_segment(data = dat,
+                     aes(x = score, xend = score_match,
+                         y = 'Treatment', yend = 'Control'),
+                     alpha = 0.4, lineend = 'round', linejoin = 'mitre', color = 'grey20',
+                     size = 1.2, arrow = arrow(length = unit(0.06, "npc"))) +
         geom_point(shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 1) +
         scale_x_continuous(limits = 0:1) +
         scale_y_discrete(drop = FALSE, labels = c("", "Control", "Treatment", "")) +
         coord_cartesian(ylim = c(2, 3)) +
-        labs(title = "The control observations within each treatment observations' 'band' are matched to that treatment observation.",
+        labs(title = "The arrows show how the treatment observations are matched to the control observations\nThe bands are the width of the caliper",
              x = 'Propensity score',
              y = NULL,
              fill = NULL)

@@ -60,10 +60,9 @@ dgpServer <- function(id) {
           'y_1 = 10 + ', input$select_tau, ' + ', input$select_slope, ' * x + rnorm(n, mean = 0, sd = ', input$slider_error, ')'
         )
       })
-
+      
       # calculate the DGP
       reactive({
-        set.seed(1234)
         N <- input$select_n
         pre_test_scores <- rnorm(N, 65, 3)
         y_0 <- 10 + input$select_slope * pre_test_scores + 0 + rnorm(N, 0, input$slider_error)

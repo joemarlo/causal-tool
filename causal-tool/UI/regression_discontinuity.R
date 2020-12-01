@@ -28,7 +28,7 @@ UI_regression_discontinuity <- tabPanel(title = "Regression discontinuity",
                              step = 1,
                              animate = animationOptions(interval = 400, loop = FALSE)),
                  br(),
-                 h4("Estimate of tau by model type:"),
+                 h4("Estimate of tau at the cutoff by model type:"),
                  htmlOutput('disc_table')
                ),
                tabPanel(

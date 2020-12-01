@@ -121,7 +121,7 @@ UI_treatment_effects <- navbarMenu(
            )
          )
     ),
-      tabPanel("Efficiency and bias",
+      tabPanel("Efficiency",
           sidebarLayout(
             sidebarPanel(
               width = 5,
@@ -132,7 +132,7 @@ UI_treatment_effects <- navbarMenu(
               h5("This dynamic holds with even as few as 50 simulations but it differs as slope and error changes. Play with data generation process settings to see how it affects the simulation results."),
               br(),
               tabsetPanel(
-                id = 'means_EB_tabs_left',
+                id = 'means_efficiency_tabs_left',
                 type = 'tabs',
                 tabPanel(
                   'Simulation',
@@ -151,22 +151,121 @@ UI_treatment_effects <- navbarMenu(
                 tabPanel(
                   'Data generation process',
                   br(),
-                  dgpUI("means_EB_"),
-                  verbatimTextOutput('hello_text')
+                  dgpUI("means_EB_")
                   )
                 )
             ),
             mainPanel(
               width = 7,
               tabsetPanel(
-                id = "means_tabs",
+                id = "means_efficiency_tabs_right",
                 type = "tabs",
-                tabPanel("Efficiency",
+                tabPanel("Randomization distribution",
                          br(),
-                         plotOutput("means_EB_plot_efficiency", height = 500)),
-                tabPanel("[Bias]")
+                         plotOutput("means_efficiency_plot_randomization", height = 500)),
+                tabPanel("Sampling distribution",
+                         br(),
+                         plotOutput("means_efficiency_plot_sampling", height = 500))
               )
             )
           )
-      )
+      ),
+  tabPanel("Bias",
+           sidebarLayout(
+             sidebarPanel(
+               width = 5,
+               h3("Bias: Why bother with regression estimates if they seem to give us a similar answer?"),
+               h5("Assume that a randomized control trial is designed to measure the effect of a drug on cholesterol levels. Smokers and non-smokers are included in the trial but their status is not accounted for in the analysis. How would this affect the results?"),
+               h5("Regression ..."),
+               h5('double check the output'),
+               br(),
+               tabsetPanel(
+                 id = 'means_bias_tabs_right',
+                 type = 'tabs',
+                 tabPanel(
+                   'Simulation',
+                   br(),
+                   sliderTextInput(
+                     inputId = 'means_bias_slider_n_sims',
+                     label = "n simulations:",
+                     selected = 250,
+                     choices = c(50, 100, 250, 500, 1000, 5000),
+                     grid = TRUE
+                   ), 
+                   actionButton(
+                     inputId = 'means_bias_button_run_sim',
+                     label = 'Run simulations')
+                 ),
+                 tabPanel(
+                   'Data generation process',
+                   br(),
+                   sliderInput(
+                     inputId = 'means_bias_slider_smoker',
+                     label = 'Proportion of observations that are smokers:',
+                     value = 0.5,
+                     min = 0,
+                     max = 1,
+                     step = 0.05
+                   ),
+                   sliderInput(
+                     inputId = 'means_bias_slider_conditional',
+                     label = 'Conditional probability of being assigned to treatment if a smoker:',
+                     value = 0.2,
+                     min = 0,
+                     max = 1,
+                     step = 0.05
+                   ),
+                   sliderInput(
+                     inputId = "means_bias_select_slope",
+                     label = "Effect of being a smoker:",
+                     value = 5,
+                     min = 0,
+                     max = 10,
+                     step = 1
+                   ),
+                   sliderInput(
+                     inputId = "means_bias_select_tau",
+                     label = "Tau:",
+                     value = 3,
+                     min = 0,
+                     max = 20,
+                     step = 1
+                   ),
+                   sliderInput(
+                     inputId = "means_bias_slider_error",
+                     label = "Error:",
+                     value = 3,
+                     min = 0,
+                     max = 10,
+                     step = 1
+                   ),
+                   sliderInput(
+                     inputId = "means_bias_select_n",
+                     label = "n:",
+                     value = 250,
+                     min = 100,
+                     max = 1000,
+                     step = 50
+                   ),
+                   HTML('<details><summary>Pseudocode to generate the data</summary>'),
+                   uiOutput(outputId = "means_bias_DGP_formula"),
+                   HTML('</details><br>')
+                 )
+               )
+             ),
+             mainPanel(
+               width = 7,
+               tabsetPanel(
+                 id = "means_bias_tabs_right",
+                 type = "tabs",
+                 tabPanel("Randomization distribution",
+                          br(),
+                          plotOutput("means_bias_plot_randomization", height = 500)),
+                 tabPanel("Sampling distribution",
+                          br(),
+                          plotOutput("means_bias_plot_sampling", height = 500))
+               )
+             )
+           )
+  )
 )
