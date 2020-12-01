@@ -502,11 +502,11 @@ shinyServer(function(input, output, session) {
         model <- gam::gam(user_formula, data = master_df)
       } else stop("No model selected")
       
-      # get propensity scores
+      # calculate propensity scores
       propensity_scores <- predict(model, type = 'response')
       
       # perform matching
-      if (input$propensity_replacement_type_input == 'With') {
+      if (input$propensity_match_type_input == 'With replacement') {
         # matching with replacement
         matches_with <- arm::matching(z = master_df$treat, 
                                       score = propensity_scores,
@@ -517,7 +517,20 @@ shinyServer(function(input, output, session) {
           as_tibble() %>%
           rename(index = V1, match = V2)
         
-      } else {
+        # df of propensity scores
+        scores <- tibble(Z = master_df$treat,
+                         score = propensity_scores,
+                         index = 1:nrow(master_df))
+        
+        # combine with matches
+        scores <- scores %>%
+          left_join(matches, by = 'index') %>%
+          left_join(scores %>% dplyr::select(score_match = score, match = index),
+                    by = 'match')
+        
+        return(scores)
+        
+      } else if (input$propensity_match_type_input == 'Without replacement'){
         # matching without replacement
         matches_wo <- arm::matching(z = master_df$treat,
                                     score = propensity_scores,
@@ -529,20 +542,32 @@ shinyServer(function(input, output, session) {
           mutate(index = row_number()) %>%
           .[master_df$treat == 1, ] %>%
           dplyr::select(index, match = matched)
-      }
-      
-      # df of propensity scores
-      scores <- tibble(Z = master_df$treat,
-                       score = propensity_scores,
-                       index = 1:nrow(master_df))
-      
-      # combine with matches
-      scores <- scores %>%
-        left_join(matches, by = 'index') %>%
-        left_join(scores %>% dplyr::select(score_match = score, match = index),
-                  by = 'match')
-      
-      return(scores)
+        
+        # df of propensity scores
+        scores <- tibble(Z = master_df$treat,
+                         score = propensity_scores,
+                         index = 1:nrow(master_df))
+        
+        # combine with matches
+        scores <- scores %>%
+          left_join(matches, by = 'index') %>%
+          left_join(scores %>% dplyr::select(score_match = score, match = index),
+                    by = 'match')
+        
+        return(scores)
+        
+      } else if (input$propensity_match_type_input == 'Radius matching'){
+        # for radius matching, return a data frame with just the scores
+        # the caliper widths will be calculated with the plot
+        
+        scores <- tibble(
+          Z = master_df$treat,
+          score = propensity_scores
+        )
+        
+        return(scores)
+        
+      } else stop("No selection for 'Matching type'")
       
     })
 
@@ -591,10 +616,10 @@ shinyServer(function(input, output, session) {
     # plot of propensity score with arrows indicating match b/t treatment and control
     output$propensity_plot_matching <- renderPlot({
 
+    if (input$propensity_match_type_input %in% c("With replacement", "Without replacement")){
       p_scores() %>%
         mutate(Z = recode(Z, `1` = 'Treatment', `0` = "Control")) %>%
         ggplot(aes(x = score, y = Z, fill = Z)) +
-        # geom_point(alpha = 0.5) +
         geom_segment(aes(x = score, xend = score_match,
                          y = 'Treatment', yend = 'Control'),
                      alpha = 0.4, lineend = 'round', linejoin = 'mitre', color = 'grey20',
@@ -605,6 +630,29 @@ shinyServer(function(input, output, session) {
              x = 'Propensity score',
              y = NULL,
              fill = NULL)
+      
+    } else if (input$propensity_match_type_input == 'Radius matching'){
+      
+      p_scores() %>% 
+        mutate(Z = recode(Z, `1` = 'Treatment', `0` = "Control"),
+               Z = factor(Z, levels = c('Low', 'Control', 'Treatment', 'High')),
+               left = ifelse(Z == 'Treatment', score - (input$propensity_slider_caliper/2), NA),
+               right = ifelse(Z == 'Treatment', score + (input$propensity_slider_caliper/2), NA)) %>%
+        ggplot(aes(x = score, y = Z, fill = Z)) +
+        geom_vline(aes(xintercept = left), alpha = 0.2) +
+        geom_vline(aes(xintercept = right), alpha = 0.2) +
+        geom_rect(aes(xmin = left, xmax = right, ymin = 'Low', ymax = 'High'),
+                  fill = 'grey70', alpha = 0.2) +
+        geom_point(shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 1) +
+        scale_x_continuous(limits = 0:1) +
+        scale_y_discrete(drop = FALSE) +
+        coord_cartesian(ylim = c(2, 3)) +
+        labs(title = 'The arrows show how the treatment observations are matched to the control observations',
+             x = 'Propensity score',
+             y = NULL,
+             fill = NULL)
+      
+    } else stop("No selection for 'Matching type'")
 
     })
 

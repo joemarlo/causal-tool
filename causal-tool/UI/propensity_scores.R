@@ -50,10 +50,19 @@ UI_propensity_scores <- navbarMenu(
                tabPanel(
                  'Matching method',
                  br(),
-                 radioButtons(inputId = "propensity_replacement_type_input",
-                              label = "Replacement type:",
-                              choices = c("With", "Without"),
-                              selected = "With")
+                 radioButtons(inputId = "propensity_match_type_input",
+                              label = "Matching type:",
+                              choices = c("With replacement", "Without replacement", "Radius matching"),
+                              selected = "With replacement"),
+                 conditionalPanel(
+                   condition = "input.propensity_match_type_input == 'Radius matching'",
+                   sliderInput(inputId = "propensity_slider_caliper",
+                               label = "Caliper width:",
+                               min = 0,
+                               max = 0.2,
+                               step = 0.01,
+                               value = 0.02)
+                 )
                )
              )
            ),
