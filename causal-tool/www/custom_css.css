@@ -52,6 +52,11 @@ summary{
     position: absolute;
 }
 
+/* prevents flickering on plot refresh */
+.recalculating {
+  opacity: 1.0;
+}
+
 /* nav tabs at the top of the page */
 #nav > li.active > a {
   color: #fff;

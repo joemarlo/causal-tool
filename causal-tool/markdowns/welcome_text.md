@@ -24,8 +24,8 @@ The tool is made possible by the following software:
 - **tidyverse**: Wickham et al., (2019). Welcome to the tidyverse. Journal of Open Source Software, 4(43), 1686, https://doi.org/10.21105/joss.01686
 - **arm**: Andrew Gelman and Yu-Sung Su (2018). arm: Data Analysis Using   Regression and Multilevel/Hierarchical Models. R package version 1.10-1. https://CRAN.R-project.org/package=arm
 - **viridis**: Simon Garnier (2018). viridis: Default Color Maps from 'matplotlib'. R package version 0.5.1. https://CRAN.R-project.org/package=viridis
-- **shinyBS**: Eric Bailey (2015). shinyBS: Twitter Bootstrap Components for Shiny. R package version 0.61. https://CRAN.R-project.org/package=shinyBS
 - **shinyjs**: Dean Attali (2020). shinyjs: Easily Improve the User Experience of Your Shiny Apps in Seconds. R package version 1.1. https://CRAN.R-project.org/package=shinyjs
 - **shinyWidgets**: Victor Perrier, Fanny Meyer and David Granjon (2020). shinyWidgets: Custom Inputs Widgets for Shiny. R package version 0.5.3. https://CRAN.R-project.org/package=shinyWidgets
+- **kableExtra**: Hao Zhu (2019). kableExtra: Construct Complex Table with 'kable' and Pipe Syntax. R package version 1.1.0. https://CRAN.R-project.org/package=kableExtra
 
 </details><br>

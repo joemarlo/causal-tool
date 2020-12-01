@@ -5,6 +5,9 @@ shinyUI(fluidPage(
     # set default slider skin
     chooseSliderSkin(skin = "Flat", color = "#221146"),
     
+    # initiate shinyjs
+    useShinyjs(),
+    
     # load custom CSS file
     includeCSS("www/custom_css.css"),
     
@@ -13,12 +16,6 @@ shinyUI(fluidPage(
         title = h1("Causal Inference"),
         windowTitle = "Causal Inference"
     ),
-    
-    # initiate shinyjs
-    useShinyjs(),
-
-    # prevents flickering on plot refresh
-    tags$style(type="text/css", ".recalculating { opacity: 1.0; }"),
     
     # overall UI structure
     navbarPage(

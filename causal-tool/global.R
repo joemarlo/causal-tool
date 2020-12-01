@@ -2,7 +2,6 @@ library(tidyverse) # for ggplot, dplyr data munging
 library(shiny)
 library(shinyWidgets) # for slider skins
 library(shinyjs) # for running javascript on the server side
-library(shinyBS) # for popovers
 library(viridis) # for better colors for color blind people
 set.seed(44)
 
@@ -23,6 +22,9 @@ rownames(master_df) <- 1:nrow(master_df)
 
 # set number of frames to render for animated ggplots
 n_frames <- 30
+
+# directly source DGP module b/c it needs to be loaded prior to the UI code
+source('R/DGP_module.R')
 
 # source UI code
 map(list.files('UI'), function(file) source(file.path("UI", file)))

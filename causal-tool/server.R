@@ -1,9 +1,7 @@
 shinyServer(function(input, output, session) {
 
-
 # welcome page ------------------------------------------------------------
 
-  
   observeEvent(input$welcome_button_update_plot, {
     output$welcome_plot <- renderPlot({
       # placeholder plot until spurious correlation dataset can be made
@@ -32,89 +30,11 @@ shinyServer(function(input, output, session) {
 
 # fundamental problem -----------------------------------------------------
 
-  output$fundamental_plot_one <- renderPlot({
-    
-    tibble(label = c('Heart\ndisease', 'Smokes'),
-           x = c(0, 1),
-           y = c(0, 1)) %>% 
-      ggplot(aes(x = x, y = y)) +
-      geom_point(shape = 21, size = 30) +
-      geom_text(aes(label = label)) +
-      geom_segment(data = tibble(x = 0.9, xend = 0.1,
-                                 y = 0.9, yend = 0.1),
-                   aes(x = x, xend = xend, y = y, yend = yend),
-                   alpha = 0.5, lineend = 'round', linejoin = 'mitre',
-                   size = 1.2,
-                   arrow = arrow(length = unit(0.04, "npc"))) +
-      coord_cartesian(xlim = c(-0.25, 1.25), ylim = c(-0.25, 1.25)) +
-      theme_void()
-    
-    
-  })
-  
-  output$fundamental_plot_two <- renderPlot({
-    
-    tibble(label = c('No heart\ndisease', 'Does not\nsmoke'),
-           x = c(0, -1),
-           y = c(0, 1)) %>% 
-      ggplot(aes(x = x, y = y)) +
-      geom_point(shape = 21, size = 30) +
-      geom_text(aes(label = label)) +
-      geom_segment(data = tibble(x = -0.9, xend = -0.1,
-                                 y = 0.9, yend = 0.1),
-                   aes(x = x, xend = xend, y = y, yend = yend),
-                   alpha = 0.5, lineend = 'round', linejoin = 'mitre',
-                   size = 1.2,
-                   arrow = arrow(length = unit(0.04, "npc"))) +
-      coord_cartesian(xlim = c(-1.25, 0.25), ylim = c(-0.25, 1.25)) +
-      theme_void()
-    
-  })  
-  
-  output$fundamental_plot_three <- renderPlot({
-    
-    tibble(label = c('Smokes', 'Heart\ndisease', 'Does not\nsmoke', 'No heart\ndisease'),
-           x = c(-1, -1, 1, 1),
-           y = c(-1, -2, -1, -2)) %>% 
-      ggplot(aes(x = x, y = y)) +
-      geom_point(shape = 21, size = 30) +
-      geom_text(aes(label = label)) +
-      geom_segment(data = tibble(x = c(-1, 1), xend = c(-1, 1),
-                                 y = c(-1.3, -1.3), yend = c(-1.7, -1.7)),
-                   aes(x = x, xend = xend, y = y, yend = yend),
-                   alpha = 0.5, lineend = 'round', linejoin = 'mitre',
-                   size = 1.2,
-                   arrow = arrow(length = unit(0.04, "npc"))) +
-      geom_segment(data = tibble(x = 0, xend = 0,
-                                 y = -0.75, yend = -2.25),
-                   aes(x = x, xend = xend, y = y, yend = yend),
-                   alpha = 0.5, linetype = 'dashed', 
-                   lineend = 'round', linejoin = 'mitre', size = 1.2) +
-      coord_cartesian(xlim = c(-1.25, 1.25), ylim = c(-2.3, -0.7)) +
-      theme_void()
-  
-    
-  })
-  
-  output$fundamental_plot_four <- renderPlot({
-    
-    tibble(label = c('Cholesterol', 'Age', 'Smokes', 'Genetics', 'Heart\ndisease'),
-           x = c(0, 0, -1, -1, 1),
-           y = c(0, 1, -0, -1, 0)) %>% 
-      ggplot(aes(x = x, y = y)) +
-      geom_point(shape = 21, size = 30) +
-      geom_text(aes(label = label)) +
-      geom_segment(data = tibble(x = c(-0.8, -1, -0.8, 0.2, 0), xend = c(-0.2, -1, -0.2, 0.8, 0),
-                                 y = c(-0.8, -0.7, 0, 0, 0.7), yend = c(-0.2, -0.3, 0, 0, 0.3)),
-                   aes(x = x, xend = xend, y = y, yend = yend),
-                   alpha = 0.5, lineend = 'round', linejoin = 'mitre',
-                   size = 1.2,
-                   arrow = arrow(length = unit(0.04, "npc"))) +
-      coord_cartesian(xlim = c(-1.25, 1.25), ylim = c(-1.25, 1.25)) +
-      theme_void()
-    
-  })
-  
+  output$fundamental_plot_one <- renderPlot(DAG_one)
+  output$fundamental_plot_two <- renderPlot(DAG_two)
+  output$fundamental_plot_three <- renderPlot(DAG_three)
+  output$fundamental_plot_four <- renderPlot(DAG_four)
+
   
 # randomization -----------------------------------------------------------
 
@@ -193,25 +113,12 @@ shinyServer(function(input, output, session) {
     })
     
 
-# difference in means -----------------------------------------------------
 
-    # data generating process
-    DGP <- reactive({
-        set.seed(1234)
-        N <- input$means_select_n
-        pre_test_scores <- rnorm(N, 65, 3)
-        y_0 <- 10 + input$means_select_slope * pre_test_scores + 0 + rnorm(N, 0, input$means_slider_error)
-        y_1 <- 10 + input$means_select_slope * pre_test_scores + input$means_select_tau + rnorm(N, 0, input$means_slider_error)
-        
-        # randomly assign treatment
-        z <- rbinom(n = N, 1, p = 0.5)
-        
-        # add observed Y
-        Y <- (y_0 * -(z - 1)) + (y_1 * z)
-        
-        return(tibble(x = pre_test_scores, y_0, y_1, z, Y, index = 1:N))
-    })
-    
+# treatment effects -------------------------------------------------------
+
+    # define the data generating process generations using the predefined module
+    DGP <- dgpServer(id = "means_")
+
     # reset animation slider on click
     observeEvent(input$means_button_reset_SATE, {
       updateSliderInput(session = session,
@@ -249,9 +156,11 @@ shinyServer(function(input, output, session) {
     # render the frames for SATE    
     render_frames_reactive <- reactive(render_frames(dat = DGP()))
 
-    # plot the interpolating data but only render the frame
-      # according to the slider input
+    # animate the SATE plot
     output$means_plot_SATE <- renderPlot({
+      
+      # this animates by interpolating the data and only render the frame
+      # according to the slider input
       
       # get data and filter to just one frame
       dat_all <- render_frames_reactive()
@@ -284,11 +193,12 @@ shinyServer(function(input, output, session) {
       return(p)
     })
     
-    # plot the interpolating data but only render the frame
-    # according to the slider input
-    # TODO fix legend labels
+    # estimating SATE animation
     output$means_plot_est_SATE <- renderPlot({
 
+      # this animates by interpolating the data and only render the frame
+      # according to the slider input
+      
       # get data and filter to just one frame
       dat_all <- render_frames_reactive()
 
@@ -326,7 +236,9 @@ shinyServer(function(input, output, session) {
           labs(title = "The researcher's perspective: only the observable data",
                x = 'x',
                y = 'y',
-               fill = NULL)
+               fill = NULL) +
+          scale_fill_discrete(labels = c("y_0", "y_1")) +
+          guides(alpha = FALSE)
       }
       
       # plot the rest of the frames
@@ -340,7 +252,8 @@ shinyServer(function(input, output, session) {
           labs(title = "The researcher's perspective: only the observable data",
                x = 'x',
                y = 'y',
-               fill = NULL)
+               fill = NULL) +
+          scale_fill_discrete(labels = c("y_0", "y_1"))
         
       }
  
@@ -363,25 +276,121 @@ shinyServer(function(input, output, session) {
       return(p)
     })
     
-    # regression plot
+    # regression plot animation
     output$means_plot_regression <- renderPlot({
-      DGP() %>% 
+      
+      # get data and filter to just one frame
+      dat_all <- render_frames_reactive()
+      
+      # filter the interpolated data to just the observable data
+      all_frames <- dat_all %>% 
         pivot_longer(cols = c('y_0', 'y_1')) %>% 
-        ggplot(aes(x = x, y = value, color = name, fill = name)) +
-        geom_point(shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 0.3) + 
-        geom_smooth(method = 'lm', formula = y ~ x) +
-        labs(title = "The researcher's perspective: only the observable data",
-             x = 'x',
-             y = 'y')
-    })
-  
-    # build efficiency plot when user clicks run simulation
-    observeEvent(input$means_button_run_sim, {
-      output$means_plot_efficiency <- renderPlot({
+        filter((z == 0 & name == 'y_0') | (z == 1 & name == 'y_1')) %>%  
+        mutate(frame = frame + 6)
+      
+      # calculate regression lines
+      if (input$means_slider_frame_regression >= 7){
+        reg <- coef(lm(Y ~ x + z, data = all_frames %>% filter(frame == 7)))
+      }
+      
+      # plot the first two frames
+      if (input$means_slider_frame_regression %in% 1:2){
+        p <- dat_all %>% 
+          filter(frame == 1) %>% 
+          pivot_longer(cols = c("y_0", "y_1")) %>% 
+          ggplot() +
+          geom_point(aes(x = x, y = value, fill = name),
+                     shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 0.3) + 
+          coord_cartesian(xlim = range(dat_all$x), ylim = range(c(dat_all$y_0, dat_all$y_1))) +
+          labs(title = "The researcher's perspective: only the observable data",
+               x = 'x',
+               y = 'y',
+               fill = NULL)
+      }
+      
+      # plot the intermediary frames highlighting the observable data
+      if (input$means_slider_frame_regression %in% 2:6){
+        p <- dat_all %>% 
+          filter(frame == 1) %>% 
+          pivot_longer(cols = c("y_0", "y_1")) %>% 
+          mutate(observable = Y == value) %>% 
+          ggplot() +
+          geom_point(aes(x = x, y = value, fill = name, alpha = observable),
+                     shape = 21, size = 3, stroke = 1) +
+          coord_cartesian(xlim = range(dat_all$x), ylim = range(c(dat_all$y_0, dat_all$y_1))) +
+          labs(title = "The researcher's perspective: only the observable data",
+               x = 'x',
+               y = 'y',
+               fill = NULL) +
+          scale_fill_discrete(labels = c("y_0", "y_1")) +
+          guides(alpha = FALSE)
+      }
+      
+      # plot the regression lines
+      if (input$means_slider_frame_regression %in% 7:11){
+        p <- all_frames %>% 
+          filter(frame == 7) %>%
+          ggplot(aes(x = x, y = value, fill = as.logical(z))) +
+          geom_point(shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 0.9) +
+          geom_abline(intercept = reg['(Intercept)'], slope = reg['x'], 
+                      color = '#440154FF', size = 1.1) +
+          geom_abline(intercept = reg['(Intercept)'] + reg['z'], slope = reg['x'], 
+                      color = '#FDE725FF', size = 1.1) +
+          coord_cartesian(xlim = range(dat_all$x), ylim = range(c(dat_all$y_0, dat_all$y_1))) +
+          labs(title = "The researcher's perspective: only the observable data",
+               x = 'x',
+               y = 'y',
+               fill = NULL) +
+          scale_fill_discrete(labels = c("y_0", "y_1"))
         
-        dat <- isolate(DGP())
-        n_sims <- isolate(input$means_slider_n_sims)
-        n <- isolate(input$means_select_n)
+      }
+      
+      # plot the regression lines and remove the data
+      if (input$means_slider_frame_regression >= 12){
+        p <- all_frames %>% 
+          filter(frame == input$means_slider_frame_regression) %>%
+          ggplot(aes(x = x, y = value, fill = as.logical(z))) +
+          geom_point(alpha = 0) +
+          geom_abline(intercept = reg['(Intercept)'], slope = reg['x'], 
+                      color = '#440154FF', size = 1.1) +
+          geom_abline(intercept = reg['(Intercept)'] + reg['z'], slope = reg['x'], 
+                      color = '#FDE725FF', size = 1.1) +
+          coord_cartesian(xlim = range(dat_all$x), ylim = range(c(dat_all$y_0, dat_all$y_1))) +
+          labs(title = "The researcher's perspective: only the observable data",
+               x = 'x',
+               y = 'y',
+               fill = NULL) +
+          scale_fill_discrete(labels = c("y_0", "y_1"))
+      }
+      
+      # on the last frame, add error bars to highlight difference in points
+      if (input$means_slider_frame_regression == 15){
+        
+        dat <- dat_all %>% filter(frame == max(frame))
+        bar_position <- tibble(x = mean(dat$x), 
+                               ymin = mean(dat$y_0),
+                               ymax = mean(dat$y_1))
+        p <- p +
+          geom_errorbar(aes(x = bar_position$x, ymin = bar_position$ymin, ymax = bar_position$ymax)) +
+          annotate('label', x = bar_position$x + 0.5, y = mean(c(bar_position$ymin, bar_position$ymax)),
+                   label = paste0("Regression estimate: ", round(reg['z'], 2)),
+                   hjust = 0, size = 5)
+      }
+      
+      return(p)
+    })
+    
+
+    # define the data generating process generations using the predefined module
+    DGP_EB <- dgpServer(id = "means_EB_")
+
+    # build efficiency plot when user clicks run simulation
+    observeEvent(input$means_EB_button_run_sim, {
+      output$means_EB_plot_efficiency <- renderPlot({
+        
+        dat <- isolate(DGP_EB())
+        n_sims <- isolate(input$means_EB_slider_n_sims)
+        n <- nrow(dat)
   
         # run simulation, shuffling the treatment label each time
         sims <- map_dfr(1:n_sims, function(i){
@@ -617,37 +626,37 @@ shinyServer(function(input, output, session) {
           text <- paste0(
             'n = ', n,
             '<br>',
-            'age = rnorm(n, 50, 12)',
+            'age = rnorm(n, mean = 50, sd = 12)',
             '<br>',
             'eligibility = (age > ', cutoff, ')',
             '<br>',
-            'y_0 = ', slope_correction, ' + ', slope, ' * age + rnorm(n, 0, ', e, ')',
+            'y_0 = ', slope_correction, ' + ', slope, ' * age + rnorm(n, mean = 0, sd = ', e, ')',
             '<br>',
-            'y_1 = ', slope_correction, ' + ', tau, ' + ', slope, ' * age + rnorm(n, 0, ', e, ')'
+            'y_1 = ', slope_correction, ' + ', tau, ' + ', slope, ' * age + rnorm(n, mean = 0, sd = ', e, ')'
           )
         } else if (input$disc_select_DGP == 'Polynomial - quadratic'){
           text <- paste0(
             'n = ', n,
             '<br>',
-            'age = rnorm(n, 50, 12)',
+            'age = rnorm(n, mean = 50, sd = 12)',
             '<br>',
             'eligibility = (age > ', cutoff, ')',
             '<br>',
-            'y_0 = 30 + 0 + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, 0, ', e, ')',
+            'y_0 = 30 + 0 + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, mean = 0, sd = ', e, ')',
             '<br>',
-            'y_1 = 30 + ', tau, ' + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, 0, ', e, ')'
+            'y_1 = 30 + ', tau, ' + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, mean = 0, sd = ', e, ')'
           )
         } else if (input$disc_select_DGP == 'Polynomial - cubic'){
           text <- paste0(
             'n = ', n,
             '<br>',
-            'age = rnorm(n, 50, 18)',
+            'age = rnorm(n, mean = 50, sd = 18)',
             '<br>',
             'eligibility = (age > ', cutoff, ')',
             '<br>',
-            'y_0 = 35 + 0 + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, 0, ', e, ')',
+            'y_0 = 35 + 0 + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, mean = 0, sd = ', e, ')',
             '<br>',
-            'y_1 = 35 + ', tau, ' + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, 0, ', e, ')'
+            'y_1 = 35 + ', tau, ' + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, mean = 0, sd = ', e, ')'
           )
           
         } else {text <- 'No DGP code available'}
