@@ -211,8 +211,8 @@ UI_treatment_effects <- navbarMenu(
                      inputId = 'means_bias_slider_conditional',
                      label = 'Conditional probability of being assigned to treatment if a smoker:',
                      value = 0.2,
-                     min = 0,
-                     max = 1,
+                     min = 0.05,
+                     max = 0.95,
                      step = 0.05
                    ),
                    sliderInput(

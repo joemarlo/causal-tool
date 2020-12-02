@@ -64,7 +64,8 @@ UI_propensity_scores <- navbarMenu(
                                min = 0,
                                max = 0.2,
                                step = 0.01,
-                               value = 0.02)
+                               value = 0.02,
+                               animate = animationOptions(interval = 400, loop = FALSE))
                  )
                )
              )

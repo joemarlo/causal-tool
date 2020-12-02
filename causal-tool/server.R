@@ -91,7 +91,8 @@ shinyServer(function(input, output, session) {
         ggplot(aes_string(x = sym(input$randomization_variable_x), 
                           y = sym(input$randomization_variable_y))) +
         geom_point(aes(fill = Group), alpha = 0.7, size = 7, 
-                       color = 'black', pch = 21, stroke = 1)
+                       color = 'black', pch = 21, stroke = 1) +
+        labs(fill = NULL)
     })
     
     # bottom plot

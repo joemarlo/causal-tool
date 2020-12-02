@@ -1,7 +1,7 @@
 
 # build custom theme
 theme_custom <- function()
-  theme_minimal() +
+  theme_minimal(base_size = 14) +
   theme(
     strip.background = element_rect(
       fill = "gray95",
@@ -13,7 +13,13 @@ theme_custom <- function()
     ),
     text = element_text(family = "Helvetica",
                         color = "gray30"),
-    legend.position = 'bottom'
+    axis.title = element_text(
+      hjust = 0.99),
+      # size = 12),
+    axis.title.x = element_text(vjust = -1),
+    legend.direction = "horizontal", 
+    legend.position = "bottom",
+    legend.justification = "right"
   )
 
 # set custom theme
