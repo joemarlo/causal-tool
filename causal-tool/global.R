@@ -20,9 +20,6 @@ master_df <- read_csv(
 ) %>% as.data.frame()
 rownames(master_df) <- 1:nrow(master_df)
 
-# set number of frames to render for animated ggplots
-n_frames <- 30
-
 # directly source DGP module b/c it needs to be loaded prior to the UI code
 source('R/DGP_module.R')
 

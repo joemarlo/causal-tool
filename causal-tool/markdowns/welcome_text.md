@@ -28,5 +28,6 @@ The tool is made possible by the following software:
 - **shinyjs**: Dean Attali (2020). shinyjs: Easily Improve the User Experience of Your Shiny Apps in Seconds. R package version 1.1. https://CRAN.R-project.org/package=shinyjs
 - **shinyWidgets**: Victor Perrier, Fanny Meyer and David Granjon (2020). shinyWidgets: Custom Inputs Widgets for Shiny. R package version 0.5.3. https://CRAN.R-project.org/package=shinyWidgets
 - **kableExtra**: Hao Zhu (2019). kableExtra: Construct Complex Table with 'kable' and Pipe Syntax. R package version 1.1.0. https://CRAN.R-project.org/package=kableExtra
+- **Archive Team**: http://textfiles.com/underconstruction/. An ode to the early web
 
 </details><br>

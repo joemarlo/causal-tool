@@ -5,8 +5,8 @@ account: jmarlo
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 3259602
-bundleId: 3934850
+bundleId: 3939412
 url: https://jmarlo.shinyapps.io/causal-tool/
-when: 1606941330.49522
+when: 1607021479.03925
 asMultiple: FALSE
 asStatic: FALSE

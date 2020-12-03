@@ -6,6 +6,8 @@ UI_welcome <- tabPanel(
       includeMarkdown("markdowns/welcome_text.md")),
     mainPanel(
       width = 6,
+      img(src = 'workers.gif'),
+      br(), br(),
       plotOutput('welcome_plot', height = 500),
       br(),
       actionButton(

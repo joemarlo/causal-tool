@@ -25,7 +25,7 @@ shinyUI(fluidPage(
         UI_fundamental_problem,
         UI_randomization,
         UI_treatment_effects,
-        UI_propensity_scores,
+        UI_observational_studies,
         UI_regression_discontinuity
         )
 ))

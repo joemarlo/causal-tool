@@ -728,8 +728,9 @@ shinyServer(function(input, output, session) {
         return(scores)
         
       } else if (input$propensity_match_type_input == 'Radius matching'){
-        # for radius matching, return a data frame with just the scores
-        # the caliper widths will be calculated with the plot
+        # for radius matching
+        # this returns a dataset that has a row for every treatment:control match
+          # and is longer than the previous two datasets
         
         scores <- tibble(
           Z = master_df$treat,
@@ -797,7 +798,7 @@ shinyServer(function(input, output, session) {
         # geom_rect(data = user_drawn_rectangle$data, 
         #           aes(xmin = xmin, ymin = ymin, xmax = xmax, ymax = ymax), 
         #           color = "red", fill = NA) +
-        labs(title = 'Unequal distributions indicate observations in one group may have higher probability of being selected into treatment',
+        labs(title = 'Unequal distributions indicate observations in one group have higher probability of being assigned to treatment',
              x = 'Propensity score',
              y = NULL) +
         theme(legend.title = element_blank())
@@ -1097,85 +1098,61 @@ shinyServer(function(input, output, session) {
       cutoff <- input$disc_numeric_cutoff 
       min_age <- cutoff - (input$disc_numeric_window / 2)
       max_age <- cutoff + (input$disc_numeric_window / 2)
+
+      # only the data within the window
       data_window <- data_obs[data_obs$age >= min_age & data_obs$age <= max_age,]
       
-      ## models
-      # all observable data within the window
-      model_lm_bandwidth <- lm(y ~ age * eligible,  data = data_window)
-      model_quad_bandwidth <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_window)
-      model_cubic_bandwidth <- lm(y ~ age * eligible + I(age^2) * eligible + I(age^3) * eligible, 
-                          data = data_window)
-      
-      # all observable data
-      model_lm_observable <- lm(y ~ age * eligible, data = data_obs)
-      model_quad_observable <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_obs)
-      model_cubic_observable <- lm(y ~ age * eligible + I(age^2) * eligible + I(age^3) * eligible, data = data_obs)
-  
       # god view data
       data_god <- data_full %>% 
         select(-eligible) %>% 
         pivot_longer(cols = c("y_0", "y_1"), names_to = 'eligible', values_to = 'y') %>% 
         mutate(eligible = recode(eligible, "y_0" = FALSE, "y_1" = TRUE))
-      model_lm_god <- lm(y ~ age * eligible, data = data_god)
-      model_quad_god <- lm(y ~ age * eligible + I(age^2) * eligible, data = data_god)
-      model_cubic_god <- lm(y ~ age * eligible + I(age^2) * eligible + I(age^3) * eligible, data = data_god)
       
-      ## coefficient estimates
-      # all observable data within the window
-      coef_lm_bandwidth <- coef(model_lm_bandwidth)[['eligibleTRUE']] + 
-        (cutoff * coef(model_lm_bandwidth)[['age:eligibleTRUE']])
-      coef_quad_bandwidth <- coef(model_quad_bandwidth)[['eligibleTRUE']] + 
-        (cutoff * coef(model_quad_bandwidth)[['age:eligibleTRUE']]) + 
-        (cutoff^2 * coef(model_quad_bandwidth)[['eligibleTRUE:I(age^2)']])
-      coef_cubic_bandwidth <- coef(model_cubic_bandwidth)[['eligibleTRUE']] + 
-        (cutoff * coef(model_cubic_bandwidth)[['age:eligibleTRUE']]) + 
-        (cutoff^2 * coef(model_cubic_bandwidth)[['eligibleTRUE:I(age^2)']]) + 
-        (cutoff^3 * coef(model_cubic_bandwidth)[['eligibleTRUE:I(age^3)']])
-      diff_bandwidth <- diff(tapply(data_window$y, INDEX = data_window$eligible, FUN = mean))
-      
-      # all observable data
-      coef_lm_observable <- coef(model_lm_observable)[['eligibleTRUE']] + 
-        (cutoff * coef(model_lm_observable)[['age:eligibleTRUE']])
-      coef_quad_observable <- coef(model_quad_observable)[['eligibleTRUE']] + 
-        (cutoff * coef(model_quad_observable)[['age:eligibleTRUE']]) + 
-        (cutoff^2 * coef(model_quad_observable)[['eligibleTRUE:I(age^2)']])
-      coef_cubic_observable <- coef(model_cubic_observable)[['eligibleTRUE']] + 
-        (cutoff * coef(model_cubic_observable)[['age:eligibleTRUE']]) + 
-        (cutoff^2 * coef(model_cubic_observable)[['eligibleTRUE:I(age^2)']]) + 
-        (cutoff^3 * coef(model_cubic_observable)[['eligibleTRUE:I(age^3)']])
-      diff_observable <- diff(tapply(data_obs$y, INDEX = data_obs$eligible, FUN = mean))
-      
-      # god view data
-      coef_lm_god <- coef(model_lm_god)[['eligibleTRUE']] + 
-        (cutoff * coef(model_lm_god)[['age:eligibleTRUE']])
-      coef_quad_god <- coef(model_quad_god)[['eligibleTRUE']] + 
-        (cutoff * coef(model_quad_god)[['age:eligibleTRUE']]) + 
-        (cutoff^2 * coef(model_quad_god)[['eligibleTRUE:I(age^2)']])
-      coef_cubic_god <- coef(model_cubic_god)[['eligibleTRUE']] + 
-        (cutoff * coef(model_cubic_god)[['age:eligibleTRUE']]) + 
-        (cutoff^2 * coef(model_cubic_god)[['eligibleTRUE:I(age^2)']]) + 
-        (cutoff^3 * coef(model_cubic_god)[['eligibleTRUE:I(age^3)']])
-      diff_god <- mean(data_full$y_1 - data_full$y_0)
+      # calculate estimates for each set of data and model type
+      estimates <- map2_dfc(
+        .x = list(data_window, data_obs, data_god),
+        .y = c('Data within bandwidth', 'All Observable', '-'), 
+        .f = function(data, name){
+        
+        # build models
+        model_lm <- lm(y ~ age * eligible,  data = data)
+        model_quad <- lm(y ~ age * eligible + I(age^2) * eligible, data = data)
+        model_cubic <- lm(y ~ age * eligible + I(age^2) * eligible + I(age^3) * eligible, 
+                          data = data)
+        
+        # extract estimates
+        coef_lm <- coef(model_lm)[['eligibleTRUE']] + 
+          (cutoff * coef(model_lm)[['age:eligibleTRUE']])
+        coef_quad <- coef(model_quad)[['eligibleTRUE']] + 
+          (cutoff * coef(model_quad)[['age:eligibleTRUE']]) + 
+          (cutoff^2 * coef(model_quad)[['eligibleTRUE:I(age^2)']])
+        coef_cubic <- coef(model_cubic)[['eligibleTRUE']] + 
+          (cutoff * coef(model_cubic)[['age:eligibleTRUE']]) + 
+          (cutoff^2 * coef(model_cubic)[['eligibleTRUE:I(age^2)']]) + 
+          (cutoff^3 * coef(model_cubic)[['eligibleTRUE:I(age^3)']])
+        diff <- diff(tapply(data$y, INDEX = data$eligible, FUN = mean))
+        
+        # combine results into dataframe
+        results <- tibble(tmp = c(coef_lm, coef_quad, coef_cubic, diff)) %>% 
+          setNames(name)
+        
+        return(results)
+      })
       
       # which row is currently selected by the user in the 'modeled relationship' dropdown
-      selected_row <- match(input$disc_select_model, c("Linear", "Polynomial - quadratic", "Polynomial - cubic", 'Difference in means'))
+      selected_row <- match(input$disc_select_model,  
+                            c("Linear", "Polynomial - quadratic", "Polynomial - cubic", 'Difference in means'))
       
-      # summary table
-      estimates <- tibble(
-        Model = c("Linear model", 'Quadratic model', 'Cubic model', 'Difference in means'),
-        `Data within bandwidth` = c(coef_lm_bandwidth, coef_quad_bandwidth, coef_cubic_bandwidth, diff_bandwidth),
-        `All observable` = c(coef_lm_observable, coef_quad_observable, coef_cubic_observable, diff_observable),
-        ` ` = c(coef_lm_god, coef_quad_god, coef_cubic_god, diff_god)) %>% 
+      # clean up estimates table
+      estimates <- estimates %>% 
+        bind_cols(Model = c("Linear model", 'Quadratic model', 'Cubic model', 'Difference in means'), .) %>% 
         knitr::kable(digits = 2, format = 'html') %>% 
         kableExtra::add_header_above(c("", "Observable data" = 2, 'All data' = 1)) %>% 
-        kableExtra::kable_styling(
-          bootstrap_options = c("hover", "condensed")
-        ) %>% 
+        kableExtra::kable_styling(bootstrap_options = c("hover", "condensed")) %>% 
         kableExtra::row_spec(row = selected_row, bold = TRUE, 
                              italic = TRUE, background = '#ebebfa')
-
+      
     return(estimates)
-    
     })
     
 })
