@@ -3,6 +3,7 @@ library(shiny)
 library(shinyWidgets) # for slider skins
 library(shinyjs) # for running javascript on the server side
 library(viridis) # for better colors for color blind people
+library(scrollytell) # for fundamentals illustration
 set.seed(44)
 
 # read in master df

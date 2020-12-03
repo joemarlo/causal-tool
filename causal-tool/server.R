@@ -30,10 +30,20 @@ shinyServer(function(input, output, session) {
 
 # fundamental problem -----------------------------------------------------
 
-  output$fundamental_plot_one <- renderPlot(DAG_one)
-  output$fundamental_plot_two <- renderPlot(DAG_two)
-  output$fundamental_plot_three <- renderPlot(DAG_three)
-  output$fundamental_plot_four <- renderPlot(DAG_four)
+  # render the DAG based on scroll position
+  output$DAG <- renderPlot({
+    
+    # which plot is the scroll on
+    which_plot <- match(input$fundamental_scroll, paste0('fundamental_scroll_', c("one", "two", "three", "four")))
+    
+    # return that plot
+    plot <- list(DAG_one, DAG_two, DAG_three, DAG_four)[which_plot]
+    
+    return(plot)
+  })
+  
+  # render scrollytell
+  output$fundamental_scroll <- renderScrollytell(scrollytell())
 
   
 # randomization -----------------------------------------------------------
