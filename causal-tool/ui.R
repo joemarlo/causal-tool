@@ -24,8 +24,10 @@ shinyUI(fluidPage(
         UI_welcome,
         UI_fundamental_problem,
         UI_randomization,
+        UI_assumptions,
         UI_treatment_effects,
         UI_observational_studies,
-        UI_regression_discontinuity
+        UI_regression_discontinuity,
+        UI_BART
         )
 ))

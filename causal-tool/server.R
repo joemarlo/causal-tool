@@ -687,7 +687,8 @@ shinyServer(function(input, output, session) {
       propensity_scores <- predict(model, type = 'response')
       
       # perform matching
-      if (input$propensity_match_type_input == 'With replacement') {
+      if (input$propensity_match_type_input == 'Nearest neighbor') {
+        if (input$propensity_radio_replacement == 'With replacement'){
         # matching with replacement
         matches_with <- arm::matching(z = master_df$treat, 
                                       score = propensity_scores,
@@ -711,7 +712,7 @@ shinyServer(function(input, output, session) {
         
         return(scores)
         
-      } else if (input$propensity_match_type_input == 'Without replacement'){
+        } else if (input$propensity_radio_replacement == 'Without replacement'){
         # matching without replacement
         matches_wo <- arm::matching(z = master_df$treat,
                                     score = propensity_scores,
@@ -737,6 +738,7 @@ shinyServer(function(input, output, session) {
         
         return(scores)
         
+        }
       } else if (input$propensity_match_type_input == 'Radius matching'){
         # for radius matching
         # this returns a dataset that has a row for every treatment:control match
@@ -818,7 +820,7 @@ shinyServer(function(input, output, session) {
     # plot of propensity score with arrows indicating match b/t treatment and control
     output$propensity_plot_matching <- renderPlot({
 
-    if (input$propensity_match_type_input %in% c("With replacement", "Without replacement")){
+    if (input$propensity_match_type_input == 'Nearest neighbor'){
       p_scores() %>%
         mutate(Z = recode(Z, `1` = 'Treatment', `0` = "Control")) %>%
         ggplot(aes(x = score, y = Z, fill = Z)) +

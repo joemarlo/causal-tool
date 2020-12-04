@@ -93,8 +93,15 @@ UI_observational_studies <- navbarMenu(
                  br(),
                  radioButtons(inputId = "propensity_match_type_input",
                               label = "Matching type:",
-                              choices = c("With replacement", "Without replacement", "Radius matching"),
-                              selected = "With replacement"),
+                              choices = c('Nearest neighbor', "Radius matching"),
+                              selected = "Nearest neighbor"),
+                 conditionalPanel(
+                   condition = "input.propensity_match_type_input == 'Nearest neighbor'",
+                   radioButtons(inputId = "propensity_radio_replacement",
+                                label = "Replacement type:",
+                                choices = c("With replacement", "Without replacement"),
+                                selected = "With replacement")
+                 ),
                  conditionalPanel(
                    condition = "input.propensity_match_type_input == 'Radius matching'",
                    sliderInput(inputId = "propensity_slider_caliper",

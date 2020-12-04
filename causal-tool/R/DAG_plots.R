@@ -1,5 +1,5 @@
 DAG_one <- tibble(
-  label = c('Heart\ndisease', 'Smokes'),
+  label = c('No heart\ndisease', 'Receives\ndrug'),
   x = c(0, 1),
   y = c(0, 1)) %>% 
   ggplot(aes(x = x, y = y)) +
@@ -15,7 +15,7 @@ DAG_one <- tibble(
   theme_void()
 
 DAG_two <- tibble(
-  label = c('No heart\ndisease', 'Does not\nsmoke'),
+  label = c('Heart\ndisease', 'Does not\nreceive\ndrug'),
   x = c(0, -1),
   y = c(0, 1)) %>% 
   ggplot(aes(x = x, y = y)) +
@@ -31,7 +31,7 @@ DAG_two <- tibble(
   theme_void()
 
 DAG_three <- tibble(
-  label = c('Smokes', 'Heart\ndisease', 'Does not\nsmoke', 'No heart\ndisease'),
+label = c('Receives\ndrug', 'No heart\ndisease', 'Does not\nreceive\ndrug', 'Heart\ndisease'),
   x = c(-1, -1, 1, 1),
   y = c(-1, -2, -1, -2)) %>% 
   ggplot(aes(x = x, y = y)) +
