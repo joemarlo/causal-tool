@@ -10,7 +10,7 @@ The tool is currently hosted on my Shinyapps.io server and can be accessed [here
 
 ## Fundamental problem of causal inference
 
-The first page sets the foundation for why causal inference is necessary. It's illustrates a simple example of an experiment involving heart disease. Directed acyclic graphs (DAGs) help formalize the concepts visually. The conclusion of the page includes a mathematically formalization to baseline users in the notation.
+The first page sets the foundation for why causal inference is necessary. It's illustrates a simple example of an experiment involving heart disease. Directed acyclic graphs (DAGs) help formalize the concepts visually. The conclusion of the page includes a mathematical formalization to baseline users in the notation.
 
 ## Randomization
 
@@ -44,13 +44,13 @@ Propensity scores page focuses on illustrating matching concepts. First, treatme
 
 The underlying data is the same as the Randomization page.
 
-![matching.png]
+![](matching.png)
 
 ## Regression discontinuity
 
+Regression discontinuity lends itself particularly well to interaction and visualization. The user is presented with both analysis tools and the data generation process. The analysis tools estimate the treatment effect under various different models and bandwidths. The underlying implication is that many models do not fit the data well and it is easy to fit the wrong one when the DGP is unknown. Both 'researcher POV' and 'god POV' are included so the user can conceptualize the differences in the known and unknown observations.
 
-
-![screenshot.png]
+![](screenshot.png)
 
 
 ## Conclusion
@@ -61,18 +61,14 @@ Many of the concepts still do illustrate well. The matching methods and the regr
 
 ### Next steps
 
-- Assumptions
-- Treatment effects
-  - animate simulation so observations 'fall down'
-- Observational study
-  - new tab
-  - overlap and balance
-  - IPTW
-- Regression discontinuity:
-  - differing functional forms on left and right side of cutoff
-  - differing bandwidth on left and right side of cutoff
-- BART. Integrating George's simulation work
+The tool currently has a wide breadth of concepts but is not comprehensive of the topics taught in the course. In an ideal world, a few more concepts would be included: notably a more prescriptive introduction to observational studies and illustrations of Bayesian Additive Regression Trees (currently being implemented with the help of George Perrett).
 
+In addition, I would like to expand on the following:
+- A new page summarizing the key assumptions of causal inference
+- Adjustments to the treatment effects page that further visualize the simulation work. Specifically animating the simulations so results "fall down" and accumulate into histograms
+- A new page covering observational studies. It would introduce observational studies and focus on the problem of overlap via the data generation process in a similar manner as the regression discontinuity page. Balance and IPTW concepts should also be covered
+- Additions to the regression discontinuity page. Enabling the ability to specify different functional forms across the left and right sides of the cutoff. And including different bandwidths across the left and right sides of the cutoff.
+- A new page on Bayesian Additive Regression Trees. This would integrate George's work into the tool.
 
 <!--
 1-2 pages
