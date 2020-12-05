@@ -22,11 +22,24 @@ shinyUI(fluidPage(
         title = 'NYU',
         id = "nav",
         UI_welcome,
-        UI_fundamental_problem,
-        UI_randomization,
-        UI_assumptions,
-        UI_treatment_effects,
-        UI_observational_studies,
+        navbarMenu(
+            title = "Basics",
+            UI_fundamental_problem,
+            UI_randomization,
+            UI_assumptions
+        ),
+        navbarMenu(
+            title = "Treatment effects",
+            UI_treatment_effects,
+            UI_efficiency,
+            UI_bias
+        ),
+        navbarMenu(
+            title = "Observational studies",
+            UI_observational_studies,
+            UI_propensity_scores,
+            UI_overlap_balance
+        ),
         UI_regression_discontinuity,
         UI_BART
         )

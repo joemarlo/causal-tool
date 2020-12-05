@@ -34,10 +34,12 @@ shinyServer(function(input, output, session) {
   output$DAG <- renderPlot({
     
     # which plot is the scroll on
-    which_plot <- match(input$fundamental_scroll, paste0('fundamental_scroll_', c("one", "two", "three", "four")))
+    which_plot <- match(input$fundamental_scroll, 
+                        paste0('fundamental_scroll_', 
+                               c("one", "two", "three", "four", "five")))
     
     # return that plot
-    plot <- list(DAG_one, DAG_two, DAG_three, DAG_four)[which_plot]
+    plot <- list(DAG_one, DAG_two, DAG_three, DAG_four, DAG_five)[which_plot]
     
     return(plot)
   })
@@ -156,7 +158,7 @@ shinyServer(function(input, output, session) {
         SATE_est <- round(mean(dat$Y[dat$z == 1]) - mean(dat$Y[dat$z == 0]), 2)
         reg <- round(coef(lm(Y ~ x + z, data = dat))[['z']], 2)
         
-        tibble(Method = c('SATE', 'Estimated SATE', 'Estimated SATE from regression'),
+        tibble(Method = c('Calculated SATE', 'Estimated SATE', 'Estimated SATE from regression'),
                Tau = c(SATE, SATE_est, reg)) %>% 
         knitr::kable(digits = 2, format = 'html') %>% 
           kableExtra::kable_styling(

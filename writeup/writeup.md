@@ -14,7 +14,7 @@ The first page sets the foundation for why causal inference is necessary. It's i
 
 ## Randomization
 
-The rationale for randomization can be easily overlooked in a high-level causal inference course so it is important to remind users why it is referred to as the gold standard. This page invites users to 'observe' two variables via plotting and then manually assign the observations to either control or treatment group. Univariate density plots of both observed and unobserved variables then populate and the resulting balance of the two groups can be visually compared. Users should then randomize the treatment groups using the button and then see how the two groups compare.
+The rationale for randomization can be easily overlooked in an advanced causal inference course so it is important to remind users why it is referred to as the gold standard. This page invites users to 'observe' two variables via plotting and then manually assign the observations to either control or treatment group. Univariate density plots of both observed and unobserved variables then populate and the resulting balance of the two groups can be visually compared. Users should then randomize the treatment groups using the button and then see how the two groups compare.
 
 The underlying data is generated to include correlations so it is difficult to manually balance the groups. n is kept small so the manual assignment process does not become tedious. The correlations of the variables are:
 
@@ -55,20 +55,21 @@ Regression discontinuity lends itself particularly well to interaction and visua
 
 ## Conclusion
 
-The original goal was to illustrate the basic concepts of causal inference. This was achieved but with some minor caveats. During the process, it became evident that the most important function learning many of the concepts is having the ability to tweak the underlying data generation process (DGP), similar to the simulation homework assignments. Combining the ability to control the DGP with animation is computationally expensive and programmatically challenging. As such, the DGP process was privileged over sleeker animations where necessary.
+The original goal was to illustrate the basic concepts of causal inference. This was achieved but with some minor caveats. During the process, it became evident that the most important function to learning many of the concepts is having the ability to control the underlying data generation process (DGP), similar to the simulation homework assignments. Combining the ability to control the DGP with animation is computationally expensive and programmatically challenging. As such, the DGP process was privileged over sleeker animations where necessary.
 
-Many of the concepts still do illustrate well. The matching methods and the regression discontinuity design are particularly insightful and are standouts for pedagogical tasks.
+Many of the concepts still do illustrate well. The matching methods and the regression discontinuity design are particularly insightful and are standouts for pedagogical use.
 
 ### Next steps
 
-The tool currently has a wide breadth of concepts but is not comprehensive of the topics taught in the course. In an ideal world, a few more concepts would be included: notably a more prescriptive introduction to observational studies and illustrations of Bayesian Additive Regression Trees (currently being implemented with the help of George Perrett).
+The tool currently has a wide breadth of concepts but is not comprehensive of the topics taught in the course. In an ideal world, a few more concepts would be included: notably a more prescriptive introduction to observational studies and illustrations of Bayesian Additive Regression Trees - which is currently being implemented with the help of George Perrett.
 
-In addition, I would like to expand on the following:
-- A new page summarizing the key assumptions of causal inference
-- Adjustments to the treatment effects page that further visualize the simulation work. Specifically animating the simulations so results "fall down" and accumulate into histograms
-- A new page covering observational studies. It would introduce observational studies and focus on the problem of overlap via the data generation process in a similar manner as the regression discontinuity page. Balance and IPTW concepts should also be covered
-- Additions to the regression discontinuity page. Enabling the ability to specify different functional forms across the left and right sides of the cutoff. And including different bandwidths across the left and right sides of the cutoff.
+In total, I would like to expand on the following:
+- A new page summarizing the key assumptions of causal inference.
+- A new page covering observational studies. It would introduce observational studies and focus on the problem of overlap via the data generation process in a similar manner as the regression discontinuity page. Balance and IPTW concepts should also be covered.
 - A new page on Bayesian Additive Regression Trees. This would integrate George's work into the tool.
+- A new page on instrumental variables.
+- Adjustments to the treatment effects page that further visualize the simulation work. Specifically animating the simulations so values "fall down" and accumulate into histograms.  
+- Additions to the regression discontinuity page. Enabling the ability to specify different functional forms across the left and right sides of the cutoff. And including different bandwidths across the left and right sides of the cutoff.
 
 <!--
 1-2 pages

@@ -13,25 +13,32 @@ UI_fundamental_problem <- tabPanel(
               id = "fundamental_scroll_one",
               width = '50%',
               h5("Causal inference is a missing data problem. We can only observe one potential outcome. We see that the person either receives the treatment or doesn't receive the treatment."),
-              h5("For example, if a recieves an experiment drug, will they develop heart disease?"),
+              br(),
+              "For example, if a person recieves an experiment drug, will they develop heart disease?",
               br(),br()
               ),
             scrolly_section(
               id = "fundamental_scroll_two",
               width = '50%',
-              h5("But what if they don't receive the drug, would they still have heart disease?"),
+              "But what if they don't receive the drug, would they have developed heart disease?",
               br(),br(),br()
               ),
             scrolly_section(
               id = "fundamental_scroll_three",
               width = '50%',
-              h5("Seeing both outcomes, heart disease and no heart disease, is impossible. This is the observed outcome and one potential counterfactual."),
+              "Seeing both outcomes, heart disease and no heart disease, is impossible. This is the observed outcome and one potential counterfactual. The difference in outcomes between these two scenarios is the causal effect.",
               br(),br(),br()
               ),
             scrolly_section(
-              id = "fundamental_scroll_four", 
+              id = "fundamental_scroll_four",
               width = '50%',
-              h5("And, in many cases, there are confounding and latent variables that further complicate the ability to draw causal inference."),
+              "But there could be more than just one counterfactual. All three of these scenarios may be possible depending on the study's design.",
+              br(),br(),br()
+            ),
+            scrolly_section(
+              id = "fundamental_scroll_five", 
+              width = '50%',
+              "And, in many cases, there are confounding and latent variables that further complicate the ability to draw causal inference.",
               br(),br(),br(),br(),br(),br(),br(),br(),br()
               )
             )
@@ -40,14 +47,14 @@ UI_fundamental_problem <- tabPanel(
         div(fluidRow(id = 'fundamental_conclusion',
                     column(width = 3),
                     column(width = 6,
-                           "We can formalize the fundamental problem by assigning labels based on treatment. For example, assume we're conducting a drug trial to reduce heart disease. Olivia is a participant in this trial and her outcomes can be represented:",
+                           "We can formalize the fundamental problem by assigning labels based on treatment. For example, assume Olivia is a participant in this trial. Her outcomes can be represented as:",
                            withMathJax(),
                            helpText('$$ \\begin{aligned}
                                     Y_{Olivia} &= \\begin{cases}
                                      Y_{Olivia}(0) \\; if \\; Z_{Olivia} = 0 \\\\
                                      Y_{Olivia}(1) \\; if \\; Z_{Olivia} = 1
                                      \\end{cases} \\\\
-                                     Y &= \\text{heart disease} \\\\
+                                     Y &= \\text{heart disease status} \\\\
                                      Z &= \\text{assignment to treatment group}
                                      \\end{aligned}\\!$$'),
                            br(),
@@ -57,7 +64,7 @@ UI_fundamental_problem <- tabPanel(
                                     Y(1) \\; if \\; Z = 1
                                     \\end{cases}\\!$$'),
                            br(),
-                           "The fundamental problem is we can only observe one of Olivia's potential outcomes but not both.",
+                           "The causal effect is defined as the difference between these two outcomes The fundamental problem is we can only observe one of Olivia's potential outcomes but not both.",
                            br(), br()
                     ),
                     column(width = 3)
