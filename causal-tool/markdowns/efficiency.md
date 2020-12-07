@@ -1,4 +1,5 @@
-### Why bother with regression estimates if they seem to give us a similar answer?
+### Benefits of regression estimates
+
 Regression results in much more efficient estimates. Playing statistics god, we can see how the observed outcomes and estimates change if we relabel the treatment assignment n amount of times. This is a randomization distribution. We then estimate SATE and the regression estimate for each of these n simulations. 
 
 You can think of this simulation process as repetitively taking samples of the same dataset, but each time randomly assigning treatment to a new group of observations and estimating the treatment effect from the resulting groups.

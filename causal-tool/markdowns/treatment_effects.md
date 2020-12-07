@@ -4,4 +4,4 @@ Estimating individual level causal effects is difficult so we often focus on est
 
 The most popular ATE estimand is the population average treatment effect (PATE) where all units in the population are included. In practice, its more realistic to estimate the sample average treatment effect (SATE) as this just includes the observations in our sample and that are observable.
 
-SATE can also be estimated using regression and is often used to achieve greater precision.
+Treatment effects can also be estimated using regression and is often used to achieve greater precision.

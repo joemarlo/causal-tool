@@ -1,33 +1,33 @@
 DAG_one <- tibble(
   label = c('No heart\ndisease', 'Receives\ndrug'),
-  x = c(0, 1),
+  x = c(0, 0),
   y = c(0, 1)) %>% 
   ggplot(aes(x = x, y = y)) +
   geom_point(shape = 21, size = 30) +
   geom_text(aes(label = label)) +
-  geom_segment(data = tibble(x = 0.9, xend = 0.1,
-                             y = 0.9, yend = 0.1),
+  geom_segment(data = tibble(x = 0, xend = 0,
+                             y = 0.8, yend = 0.2),
                aes(x = x, xend = xend, y = y, yend = yend),
                alpha = 0.5, lineend = 'round', linejoin = 'mitre',
                size = 1.2,
                arrow = arrow(length = unit(0.04, "npc"))) +
-  coord_cartesian(xlim = c(-0.25, 1.25), ylim = c(-0.25, 1.25)) +
+  coord_cartesian(xlim = c(-0.10, 0.25), ylim = c(-0.25, 1.25)) +
   theme_void()
 
 DAG_two <- tibble(
   label = c('Heart\ndisease', 'Does not\nreceive\ndrug'),
-  x = c(0, -1),
+  x = c(0, 0),
   y = c(0, 1)) %>% 
   ggplot(aes(x = x, y = y)) +
   geom_point(shape = 21, size = 30) +
   geom_text(aes(label = label)) +
-  geom_segment(data = tibble(x = -0.9, xend = -0.1,
-                             y = 0.9, yend = 0.1),
+  geom_segment(data = tibble(x = 0, xend = 0,
+                             y = 0.8, yend = 0.2),
                aes(x = x, xend = xend, y = y, yend = yend),
                alpha = 0.5, lineend = 'round', linejoin = 'mitre',
                size = 1.2,
                arrow = arrow(length = unit(0.04, "npc"))) +
-  coord_cartesian(xlim = c(-1.25, 0.25), ylim = c(-0.25, 1.25)) +
+  coord_cartesian(xlim = c(-0.25, 0.10), ylim = c(-0.25, 1.25)) +
   theme_void()
 
 DAG_three <- tibble(
@@ -77,21 +77,21 @@ DAG_four <- tibble(
                lineend = 'round', linejoin = 'mitre', size = 1.2) +
   coord_cartesian(xlim = c(-1.25, 1.25), ylim = c(-2.3, -0.7)) +
   theme_void()
-  
+
 DAG_five <- tibble(
-  label = c('Cholesterol', 'Age', 'Smokes', 'Genetics', 'Heart\ndisease', 'Receives\ndrug'),
-  x = c(0, 0, -1, -1, 1, 0),
-  y = c(0, 1, -0, -1, 0, -1)) %>% 
+  label = c('No heart\ndisease', 'Receives\ndrug', 'Cholesterol', 'Age', 'Smokes', 'Genetics'),
+  x = c(0, 0, 1, 1, 2, 2),
+  y = c(0, 1, 0.5, 1.5, 1, 0)) %>% 
   ggplot(aes(x = x, y = y)) +
   geom_point(shape = 21, size = 30) +
   geom_text(aes(label = label)) +
-  geom_segment(data = tibble(x = c(-0.8, -1, -0.8, 0.2, 0, 0, 0.2), 
-                             xend = c(-0.2, -1, -0.2, 0.8, 0, 0, 0.8),
-                             y = c(-0.8, -0.7, 0, 0, 0.7, -0.7, -0.8), 
-                             yend = c(-0.2, -0.3, 0, 0, 0.3, -0.3, -0.2)),
+  geom_segment(data = tibble(x = c(0, 0.2, 0.8, 1.0, 1.80, 2.0, 1.80), 
+                             xend = c(0, 0.8, 0.2, 1.0, 1.2, 2.0, 1.2),
+                             y = c(0.8, 0.9, 0.35, 1.3, 0.9, 0.20, 0.1), 
+                             yend = c(0.2, 0.65, 0.1, 0.70, 0.65, 0.80, 0.35)),
                aes(x = x, xend = xend, y = y, yend = yend),
                alpha = 0.5, lineend = 'round', linejoin = 'mitre',
                size = 1.2,
                arrow = arrow(length = unit(0.04, "npc"))) +
-  coord_cartesian(xlim = c(-1.25, 1.25), ylim = c(-1.25, 1.25)) +
+  coord_cartesian(xlim = c(-0.25, 2.25), ylim = c(-0.25, 1.75)) +
   theme_void()

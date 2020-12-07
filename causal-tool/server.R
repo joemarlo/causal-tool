@@ -158,7 +158,7 @@ shinyServer(function(input, output, session) {
         SATE_est <- round(mean(dat$Y[dat$z == 1]) - mean(dat$Y[dat$z == 0]), 2)
         reg <- round(coef(lm(Y ~ x + z, data = dat))[['z']], 2)
         
-        tibble(Method = c('Calculated SATE', 'Estimated SATE', 'Estimated SATE from regression'),
+        tibble(Method = c('Calculated SATE', 'Estimated SATE', 'Regression'),
                Tau = c(SATE, SATE_est, reg)) %>% 
         knitr::kable(digits = 2, format = 'html') %>% 
           kableExtra::kable_styling(
@@ -514,8 +514,8 @@ shinyServer(function(input, output, session) {
             means_bias_select_n = input$means_bias_select_n,
             means_bias_slider_smoker = input$means_bias_slider_smoker,
             means_bias_slider_error = input$means_bias_slider_error,
-            means_bias_select_slope = input$means_bias_select_slope,
-            means_bias_select_tau = input$means_bias_select_tau,
+            means_bias_slider_tau_smoker = input$means_bias_slider_tau_smoker,
+            means_bias_slider_tau_nonsmoker = input$means_bias_slider_tau_nonsmoker,
             means_bias_slider_conditional = input$means_bias_slider_conditional
           )
         )

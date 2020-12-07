@@ -42,16 +42,16 @@ UI_bias <- tabPanel(
                    step = 0.05
                  ),
                  sliderInput(
-                   inputId = "means_bias_select_slope",
-                   label = "Effect of being a smoker:",
+                   inputId = "means_bias_slider_tau_smoker",
+                   label = "Effect for observations that are smokers:",
                    value = 5,
                    min = 0,
                    max = 10,
                    step = 1
                  ),
                  sliderInput(
-                   inputId = "means_bias_select_tau",
-                   label = "Tau:",
+                   inputId = "means_bias_slider_tau_nonsmoker",
+                   label = "Effect for observations that are not smokers:",
                    value = 3,
                    min = 0,
                    max = 20,

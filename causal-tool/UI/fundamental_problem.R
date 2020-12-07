@@ -54,7 +54,7 @@ UI_fundamental_problem <- tabPanel(
                                      Y_{Olivia}(0) \\; if \\; Z_{Olivia} = 0 \\\\
                                      Y_{Olivia}(1) \\; if \\; Z_{Olivia} = 1
                                      \\end{cases} \\\\
-                                     Y &= \\text{heart disease status} \\\\
+                                     Y &= \\text{heart disease outcome} \\\\
                                      Z &= \\text{assignment to treatment group}
                                      \\end{aligned}\\!$$'),
                            br(),
@@ -64,7 +64,7 @@ UI_fundamental_problem <- tabPanel(
                                     Y(1) \\; if \\; Z = 1
                                     \\end{cases}\\!$$'),
                            br(),
-                           "The causal effect is defined as the difference between these two outcomes The fundamental problem is we can only observe one of Olivia's potential outcomes but not both.",
+                           "The causal effect is defined as the difference between these two outcomes. The fundamental problem is we can only observe one of Olivia's potential outcomes but not both.",
                            br(), br()
                     ),
                     column(width = 3)

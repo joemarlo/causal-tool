@@ -61,14 +61,14 @@ Many of the concepts still do illustrate well. The matching methods and the regr
 
 ### Next steps
 
-The tool currently has a wide breadth of concepts but is not comprehensive of the topics taught in the course. In an ideal world, a few more concepts would be included: notably a more prescriptive introduction to observational studies and illustrations of Bayesian Additive Regression Trees - which is currently being implemented with the help of George Perrett.
+The tool currently covers a wide breadth of concepts but is not comprehensive of the topics taught in the course. In an ideal world, a few more concepts would be included: notably a more prescriptive introduction to observational studies and illustrations of Bayesian Additive Regression Trees - which is currently being implemented with the help of George Perrett.
 
 In total, I would like to expand on the following:
 - A new page summarizing the key assumptions of causal inference.
 - A new page covering observational studies. It would introduce observational studies and focus on the problem of overlap via the data generation process in a similar manner as the regression discontinuity page. Balance and IPTW concepts should also be covered.
 - A new page on Bayesian Additive Regression Trees. This would integrate George's work into the tool.
 - A new page on instrumental variables.
-- Adjustments to the treatment effects page that further visualize the simulation work. Specifically animating the simulations so values "fall down" and accumulate into histograms.  
+- Adjustments to the treatment effects page that further visualize the simulation work. Specifically animating the simulations so values "fall down" and accumulate into histograms. Adding the ability to include just an indicator for treatment for regression or to include both the treatment indicator and other pre-treatment variables.
 - Additions to the regression discontinuity page. Enabling the ability to specify different functional forms across the left and right sides of the cutoff. And including different bandwidths across the left and right sides of the cutoff.
 
 <!--
