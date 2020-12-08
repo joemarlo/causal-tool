@@ -2,7 +2,7 @@
 
 Causal inference is a topic that lends itself well to visualizing many of the core concepts. The goal of this webtool is to help build your intuition for key causal inference concepts via visualization. The tool attempts to follow a 'first principles' path by first describing the fundamental problem of causal inference and why randomization is often necessary. From there, visualizations of treatment effects, propensity scores, and regression discontinuity are included. All rely heavily on interaction, simulation, and visualization. The tool's components are independent of each other but they generally progress in complexity from left-to-right on the navigation bar.
 
-It is not comprehensive. For more information on learning causal inference, try the following resources:
+This is not a comprehensive review. For more information on learning causal inference, try the following resources:
 - [Regression and Other Stories](https://avehtari.github.io/ROS-Examples/)
 - [Data Analysis Using Regression and Multilevel/Hierarchical Modesl](http://www.stat.columbia.edu/~gelman/arm/)
 - [Nick Huntington-Klein's blog post illustrating causal inference](http://nickchk.com/causalgraphs.html)
