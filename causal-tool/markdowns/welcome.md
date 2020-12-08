@@ -4,14 +4,14 @@ Causal inference is a topic that lends itself well to visualizing many of the co
 
 It is not comprehensive. For more information on learning causal inference, try the following resources:
 - [Regression and Other Stories](https://avehtari.github.io/ROS-Examples/)
+- [Data Analysis Using Regression and Multilevel/Hierarchical Modesl](http://www.stat.columbia.edu/~gelman/arm/)
 - [Nick Huntington-Klein's blog post illustrating causal inference](http://nickchk.com/causalgraphs.html)
-- ...
 
 The webtool is built for a desktop or laptop experience and works best on Safari or Chrome.
 
 ### Why is causal inference important?
 
-Ut faucibus pulvinar elementum integer enim neque volutpat ac tincidunt. Tempor orci eu lobortis elementum. Curabitur gravida arcu ac tortor dignissim convallis aenean et. Sed risus pretium quam vulputate dignissim suspendisse in est ante. Sed odio morbi quis commodo odio aenean.
+"Correlation != causation" is a common refrain in statistics. We answer most research questions using advanced correlation measures but we *really* want to understand is the underlying causal mechanism. Does the vaccine reduce infection rates? Do higher taxes reduce inequality? Does an ad increase the number of customers? Update the plot on the right to see highly correlated relationships from real-life data.
 
 ***
 

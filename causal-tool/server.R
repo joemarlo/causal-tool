@@ -499,10 +499,10 @@ shinyServer(function(input, output, session) {
         '<br>',
         'y_0 = 10 + 0 + rnorm(n, mean = 0, sd = ', input$means_bias_slider_error, ')',
         '<br>',
-        'y_1 = 10 + ', input$means_bias_select_tau, ' + ', input$means_bias_select_slope, ' * smoker + rnorm(n, mean = 0, sd = ', input$means_bias_slider_error, ')'
+        'y_1 = 10 + (', input$means_bias_slider_tau_nonsmoker, ' * (1 - smoker)) + (', input$means_bias_slider_tau_smoker, ' * smoker) + rnorm(n, mean = 0, sd = ', input$means_bias_slider_error, ')'
       )
     })
-    
+
     observeEvent(input$means_bias_button_run_sim, {
       
       # build randomization distribution plot when user clicks run simulation
@@ -540,6 +540,29 @@ shinyServer(function(input, output, session) {
           return(tibble(`SATE estimate` = SATE_est, `Regression estimate` = reg, ID = i))
         })
         
+        # estimates in the table
+        output$means_bias_table <- renderText({
+          
+          # summary stats: bias, efficiency, RMSE
+          true_sate <- mean(dat$y_1 - dat$y_0)
+          SATE_bias <- mean(sims$`SATE estimate`) - true_sate
+          lm_bias <- mean(sims$`Regression estimate`) - true_sate
+          SATE_efficiency <- var(sims$`SATE estimate`)
+          lm_efficiency <- var(sims$`Regression estimate`)
+          SATE_rmse <- sqrt(mean((sims$`SATE estimate` - true_sate)^2))
+          lm_rmse <- sqrt(mean((sims$`Regression estimate` - true_sate)^2))
+
+           # create estimates table
+          tibble(
+            Description = c("Bias (estimate minus true SATE)", "Efficiency (variance of estimate)", 'RMSE (estimate vs true SATE)'),
+            SATE = c(SATE_bias, SATE_efficiency, SATE_rmse),
+            Regression = c(lm_bias, lm_efficiency, lm_rmse)
+            ) %>%
+            knitr::kable(digits = 2, format = 'html', 
+                         col.names = c(paste0('True SATE: ', round(true_sate, 2)), "SATE", 'Regression')) %>%
+            kableExtra::kable_styling(bootstrap_options = c("hover", "condensed"))
+        })
+        
         # calculate mean per estimator
         group_means <- sims %>%
           pivot_longer(cols = -ID) %>% 
@@ -553,13 +576,16 @@ shinyServer(function(input, output, session) {
           ggplot(aes(x = value, fill = name)) +
           geom_density(alpha = 0.7) +
           geom_vline(data = group_means, aes(xintercept = mean, color = name)) +
+          geom_vline(xintercept = mean(dat$y_1 - dat$y_0),
+                     color = 'black', linetype = 'dashed') +
+          annotate(x = mean(dat$y_1 - dat$y_0) * 1.005, y = 0.15, geom = 'text',
+                    fill = 'white', angle = 90, label = 'True SATE') +
           scale_fill_brewer(palette = 'Dark2') +
           scale_color_brewer(palette = 'Dark2') +
           guides(color = FALSE) +
           labs(x = NULL,
                y = NULL,
                fill = NULL)
-        
       })
       
       # build sampling distribution plot when user clicks run simulation
@@ -576,8 +602,8 @@ shinyServer(function(input, output, session) {
               means_bias_select_n = input$means_bias_select_n,
               means_bias_slider_smoker = input$means_bias_slider_smoker,
               means_bias_slider_error = input$means_bias_slider_error,
-              means_bias_select_slope = input$means_bias_select_slope,
-              means_bias_select_tau = input$means_bias_select_tau,
+              means_bias_slider_tau_smoker = input$means_bias_slider_tau_smoker,
+              means_bias_slider_tau_nonsmoker = input$means_bias_slider_tau_nonsmoker,
               means_bias_slider_conditional = input$means_bias_slider_conditional
             )
           )
@@ -610,6 +636,7 @@ shinyServer(function(input, output, session) {
                fill = NULL)
         
       })
+      
     })
     
 
@@ -1156,7 +1183,7 @@ shinyServer(function(input, output, session) {
       # which row is currently selected by the user in the 'modeled relationship' dropdown
       selected_row <- match(input$disc_select_model,  
                             c("Linear", "Polynomial - quadratic", "Polynomial - cubic", 'Difference in means'))
-      
+     
       # clean up estimates table
       estimates <- estimates %>% 
         bind_cols(Model = c("Linear model", 'Quadratic model', 'Cubic model', 'Difference in means'), .) %>% 

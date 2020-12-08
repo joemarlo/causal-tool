@@ -3,7 +3,7 @@ UI_welcome <- tabPanel(
   sidebarLayout(
     sidebarPanel(
       width = 6,
-      includeMarkdown("markdowns/welcome_text.md")),
+      includeMarkdown("markdowns/welcome.md")),
     mainPanel(
       width = 6,
       img(src = 'workers.gif'),

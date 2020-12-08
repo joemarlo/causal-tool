@@ -1,4 +1,4 @@
-### Benefits of regression estimates
+### Benefits of regression estimates: efficiency
 
 Regression results in much more efficient estimates. Playing statistics god, we can see how the observed outcomes and estimates change if we relabel the treatment assignment n amount of times. This is a randomization distribution. We then estimate SATE and the regression estimate for each of these n simulations. 
 

@@ -6,7 +6,7 @@ UI_bias <- tabPanel(
              includeMarkdown('markdowns/bias.md'),
              br(),
              tabsetPanel(
-               id = 'means_bias_tabs_right',
+               id = 'means_bias_tabs_left',
                type = 'tabs',
                tabPanel(
                  'Simulation',
@@ -21,6 +21,13 @@ UI_bias <- tabPanel(
                  actionButton(
                    inputId = 'means_bias_button_run_sim',
                    label = 'Run simulations')
+               ),
+               tabPanel(
+                 'Results',
+                 br(),
+                 h4("Results:"),
+                 htmlOutput('means_bias_table'),
+                 helpText("Results are from the randomization distribution")
                ),
                tabPanel(
                  'Data generation process',

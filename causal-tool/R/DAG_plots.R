@@ -48,7 +48,7 @@ DAG_three <- tibble(
                aes(x = x, xend = xend, y = y, yend = yend),
                alpha = 0.5, linetype = 'dashed', 
                lineend = 'round', linejoin = 'mitre', size = 1.2) +
-  coord_cartesian(xlim = c(-1.25, 1.25), ylim = c(-2.3, -0.7)) +
+  coord_cartesian(xlim = c(-1.7, 1.7), ylim = c(-2.3, -0.7)) +
   theme_void()
 
 DAG_four <- tibble(
