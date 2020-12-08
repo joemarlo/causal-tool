@@ -2,16 +2,31 @@ shinyServer(function(input, output, session) {
 
 # welcome page ------------------------------------------------------------
 
-  # plot of spurious correlations
+  # initialize list of used ids that determines which series have been plotted previously
+  used_series <- reactiveValues(id = NULL)
+  
+  # on button click, choose which series to plot and then plot it
   observeEvent(input$welcome_button_update_plot, {
+    
+    # select a series to plot. this should be random but the first two should
+      # be sleep paralysis and then nyu:causal_inference
+    if (length(used_series$id) == 0){
+      current_id <- 'causal_inference:sleep_paralysis'
+    } else if (length(used_series$id) == 1){
+      current_id <- 'new_york_university:causal_inference'
+    } else{
+      current_id <- sample(unique(spurious_df$id), size = 1)
+    }
+    
+    # added used ids to list
+    used_series$id <- c(used_series$id, current_id)
+    
+    # make the plot
     output$welcome_plot <- renderPlot({
 
-      # get random series
-      selected_series <- sample(unique(spurious_df$id), size = 1)
-      
       # filter df to that series and clean up names
       df <- spurious_df %>% 
-        filter(id == selected_series) %>% 
+        filter(id == current_id) %>% 
         mutate(article = str_replace_all(article, "_", " "),
                article = str_to_title(article))
       
