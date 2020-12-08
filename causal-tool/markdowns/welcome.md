@@ -11,7 +11,7 @@ The webtool is built for a desktop or laptop experience and works best on Safari
 
 ### Why is causal inference important?
 
-"Correlation != causation" is a common refrain in statistics. We answer most research questions using advanced correlation measures but we *really* want to understand is the underlying causal mechanism. Does the vaccine reduce infection rates? Do higher taxes reduce inequality? Does an ad increase the number of customers? Update the plot on the right to see highly correlated relationships from real-life data.
+"Correlation != causation" is a common refrain in statistics. We answer many research questions using advanced correlation measures but we *really* want to understand is the underlying causal mechanism. Does the vaccine reduce infection rates? Do higher taxes reduce inequality? Does an ad increase the number of customers? Update the plot on the right to see highly correlated but fraughtful relationships from real-life data.
 
 ***
 
@@ -28,6 +28,7 @@ The tool is made possible by the following software:
 - **shinyjs**: Dean Attali (2020). shinyjs: Easily Improve the User Experience of Your Shiny Apps in Seconds. R package version 1.1. https://CRAN.R-project.org/package=shinyjs
 - **shinyWidgets**: Victor Perrier, Fanny Meyer and David Granjon (2020). shinyWidgets: Custom Inputs Widgets for Shiny. R package version 0.5.3. https://CRAN.R-project.org/package=shinyWidgets
 - **kableExtra**: Hao Zhu (2019). kableExtra: Construct Complex Table with 'kable' and Pipe Syntax. R package version 1.1.0. https://CRAN.R-project.org/package=kableExtra
+- **pageviews**: Os Keyes and Jeremiah Lewis (2020). pageviews: An API Client for Wikimedia Traffic Data. R package version 0.5.0. https://CRAN.R-project.org/package=pageviews
 - **Archive Team**: http://textfiles.com/underconstruction/. An ode to the early web
 
 </details><br>

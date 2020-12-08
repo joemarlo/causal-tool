@@ -21,6 +21,17 @@ master_df <- read_csv(
 ) %>% as.data.frame()
 rownames(master_df) <- 1:nrow(master_df)
 
+# read in spurious data
+spurious_df <- read_csv(
+  "data/wikipedia_page_views.csv",
+  col_types = cols(
+    date = col_date(format = "%Y-%m-%d"),
+    article = col_character(),
+    views = col_integer(),
+    id = col_character()
+  )
+)
+
 # directly source DGP module b/c it needs to be loaded prior to the UI code
 source('R/DGP_module.R')
 

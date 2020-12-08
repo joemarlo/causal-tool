@@ -2,25 +2,43 @@ shinyServer(function(input, output, session) {
 
 # welcome page ------------------------------------------------------------
 
+  # plot of spurious correlations
   observeEvent(input$welcome_button_update_plot, {
     output$welcome_plot <- renderPlot({
-      # placeholder plot until spurious correlation dataset can be made
+
+      # get random series
+      selected_series <- sample(unique(spurious_df$id), size = 1)
       
-      Year <- 2000:2020
-      y1 <- rnorm(length(Year), Year/200, sd = 3)
-      y2 <- rnorm(length(Year), y1, 2)
+      # filter df to that series and clean up names
+      df <- spurious_df %>% 
+        filter(id == selected_series) %>% 
+        mutate(article = str_replace_all(article, "_", " "),
+               article = str_to_title(article))
       
-      tibble(Year, y1, y2) %>%
-        pivot_longer(cols = c('y1', 'y2')) %>% 
-        ggplot(aes(x = Year, y = value, color = name, fill = name)) +
+      # calculate correlation between the series
+      corr <- df %>% pivot_wider(names_from = 'article', values_from = 'views')
+      corr <- cor(corr[,3], corr[,4])
+      
+      # plot title
+      article_names <- paste0(unique(df$article), collapse = ' vs. ')
+      
+      # plot it
+      df %>% 
+        group_by(article) %>% 
+        mutate(views = scale(views)) %>% 
+        ggplot(aes(x = date, y = views, color = article, fill = article)) +
         geom_line() +
         geom_point(shape = 21, color = 'black', size = 4) +
-        labs(title = paste0("[PLACEHOLDER] Spurious correlations: ", round(cor(y1, y2), 2), ' correlation'),
-             x = "Year",
+        scale_x_date(date_breaks = '1 year', date_labels = '%Y') +
+        scale_y_continuous(labels = NULL) +
+        labs(title = paste0("Spurious correlations: ", article_names),
+             subtitle = 'Wikipedia page views over time',
+             x = NULL,
              y = NULL,
              fill = NULL,
-             color = NULL)
-      
+             color = NULL,
+             caption = 'Source: Wikimedia Foundation')
+
     })
   })
   

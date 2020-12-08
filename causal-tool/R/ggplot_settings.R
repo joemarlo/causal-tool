@@ -19,7 +19,10 @@ theme_custom <- function()
     axis.title.x = element_text(vjust = -1),
     legend.direction = "horizontal", 
     legend.position = "bottom",
-    legend.justification = "right"
+    legend.justification = "right",
+    plot.caption = element_text(face = "italic",
+                                size = 8,
+                                color = 'grey50')
   )
 
 # set custom theme
