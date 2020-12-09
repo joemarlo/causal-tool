@@ -17,12 +17,12 @@ top_articles <- map_dfr(dates_to_test, function(date) {
     select(article)
 })
 
-# list of articles ot get data on
+# list of distinct articles to get pageviews data on
 articles <- top_articles %>% 
   distinct() %>% 
   pull()
 
-# get the page views of 500 random top articles + R + causal inference
+# get the page views of 5000 random top articles + R + causal inference + NYU
 articles_samp <- sample(articles, size = 5000) %>% 
   append(c('R (programming language)', 'Causal inference', "New York University"))
 pv_results <- map_dfr(articles_samp, function(article){
@@ -95,7 +95,6 @@ pairs %>%
   theme(legend.position = 'none',
         strip.text = element_text(size = 6))
 
-
 # interesting handpicked pairs
 handpicked <- c(
   'causal_inference:emily_hampshire',
@@ -128,7 +127,6 @@ handpicked <- c(
   # 'causal_inference:suicide_methods',
   'causal_inference:zodiac'
 )
-
 handpicked <- sort(unique(handpicked))
 
 # plot the handpicked ones

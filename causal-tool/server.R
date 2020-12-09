@@ -158,7 +158,6 @@ shinyServer(function(input, output, session) {
     })
     
 
-
 # treatment effects -------------------------------------------------------
 
     # define the data generating process generations using the predefined module
@@ -268,7 +267,9 @@ shinyServer(function(input, output, session) {
                x = 'x',
                y = 'y',
                fill = NULL)
+        
       } else if (input$means_slider_frame_est_SATE %in% 2:6){
+        
         # plot the intermediary frames highlighting the observable data
         p <- dat_all %>% 
           filter(frame == 1) %>% 
@@ -284,7 +285,9 @@ shinyServer(function(input, output, session) {
                fill = NULL) +
           scale_fill_discrete(labels = c("y_0", "y_1")) +
           guides(alpha = FALSE)
+        
       } else if (input$means_slider_frame_est_SATE >= 7){
+        
         # plot the rest of the frames
         p <- all_frames %>% 
           filter(frame == input$means_slider_frame_est_SATE) %>%
@@ -368,7 +371,9 @@ shinyServer(function(input, output, session) {
                fill = NULL) +
           scale_fill_discrete(labels = c("y_0", "y_1")) +
           guides(alpha = FALSE)
+        
       } else if (input$means_slider_frame_regression %in% 7:11){
+        
         # plot the regression lines
         p <- all_frames %>% 
           filter(frame == 7) %>%
@@ -386,6 +391,7 @@ shinyServer(function(input, output, session) {
           scale_fill_discrete(labels = c("y_0", "y_1"))
         
       } else if (input$means_slider_frame_regression >= 12){
+        
         # plot the regression lines and remove the data
         p <- all_frames %>% 
           filter(frame == input$means_slider_frame_regression) %>%
@@ -712,8 +718,10 @@ shinyServer(function(input, output, session) {
           prob = probs
         )
       } else if (input$propensity_select_method == 'Random'){
+        
         # random treatment assignment
         treat <- rbinom(nrow(master_df), size = 1, prob = 0.5)
+        
       } else {stop("No selection for 'method to determine treatment'")}
       
       return(treat)
@@ -940,6 +948,7 @@ shinyServer(function(input, output, session) {
         slope_correction <- 50 - (50 * slope)
                 
         if (input$disc_select_DGP == 'Linear'){
+          
           text <- paste0(
             'n = ', n,
             '<br>',
@@ -951,7 +960,9 @@ shinyServer(function(input, output, session) {
             '<br>',
             'y_1 = ', slope_correction, ' + ', tau, ' + ', slope, ' * age + rnorm(n, mean = 0, sd = ', e, ')'
           )
+          
         } else if (input$disc_select_DGP == 'Polynomial - quadratic'){
+          
           text <- paste0(
             'n = ', n,
             '<br>',
@@ -963,7 +974,9 @@ shinyServer(function(input, output, session) {
             '<br>',
             'y_1 = 30 + ', tau, ' + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, mean = 0, sd = ', e, ')'
           )
+          
         } else if (input$disc_select_DGP == 'Polynomial - cubic'){
+          
           text <- paste0(
             'n = ', n,
             '<br>',
@@ -1003,17 +1016,23 @@ shinyServer(function(input, output, session) {
       
       # generate the data per the user input
       if (input$disc_select_DGP == 'Linear'){
+        
         y_0 <- 0 + (slope * age) + rnorm(n, 0, e) + slope_correction
         y_1 <- 0 + tau + (slope * age) + rnorm(n, 0, e) + slope_correction
+        
       } else if (input$disc_select_DGP == 'Polynomial - quadratic'){
+        
         y_0 <- 30 + 0 + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, 0, e)
         y_1 <- 30 + tau + 0.03 * (age - 40) + 0.03 * (age - 40)^2 + rnorm(n, 0, e)
+        
       } else if (input$disc_select_DGP == 'Polynomial - cubic'){
+        
         # regenerate a wider age vector b/c the polynomial 'squishs' the data along the x
         age <- rnorm(n, 50, 18)
         eligible <- (age > cutoff)
         y_0 <- 35 + 0 + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, 0, e)
         y_1 <- 35 + tau + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, 0, e)
+        
       } else stop("No discontinuity DGP process selected")
 
       # store the results in separate dataframes
@@ -1058,17 +1077,23 @@ shinyServer(function(input, output, session) {
         
       # add regression lines per user input
       if (input$disc_select_model == 'Linear'){
+        
          p <- p  +
           geom_smooth(data = dat_cut, color = 'grey10',
                       method = 'lm', formula = y ~ x)
+         
       } else if (input$disc_select_model == 'Polynomial - quadratic'){
+        
         p <- p +
           geom_smooth(data = dat_cut, color = 'grey10',
                       method = 'lm', formula = y ~ poly(x, 2, raw = TRUE))
+        
       } else if (input$disc_select_model == 'Polynomial - cubic'){
+        
         p <- p +
           geom_smooth(data = dat_cut, color = 'grey10',
                       method = 'lm', formula = y ~ poly(x, 3, raw = TRUE))
+        
       } else if (input$disc_select_model == 'Difference in means'){
 
         # calculate mean per eligibility group
@@ -1112,16 +1137,22 @@ shinyServer(function(input, output, session) {
       
       # add regression lines per user input
       if (input$disc_select_model == 'Linear'){
+        
         p <- p +
           geom_smooth(color = 'grey10', method = 'lm', formula = y ~ x)
+        
       } else if (input$disc_select_model == 'Polynomial - quadratic'){
+        
         p <- p +
           geom_smooth(color = 'grey10', method = 'lm', 
                       formula = y ~ poly(x, 2, raw = TRUE))
+        
       } else if (input$disc_select_model == 'Polynomial - cubic'){
+        
         p <- p +
           geom_smooth(color = 'grey10', method = 'lm', 
                       formula = y ~ poly(x, 3, raw = TRUE))
+        
       } else if (input$disc_select_model == 'Difference in means'){
 
        # calculate min and max ages for plotting
