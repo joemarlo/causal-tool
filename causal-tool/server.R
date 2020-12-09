@@ -31,8 +31,8 @@ shinyServer(function(input, output, session) {
                article = str_to_title(article))
       
       # calculate correlation between the series
-      corr <- df %>% pivot_wider(names_from = 'article', values_from = 'views')
-      corr <- cor(corr[,3], corr[,4])
+      # corr <- df %>% pivot_wider(names_from = 'article', values_from = 'views')
+      # corr <- cor(corr[,3], corr[,4])
       
       # plot title
       article_names <- paste0(unique(df$article), collapse = ' vs. ')
@@ -90,7 +90,6 @@ shinyServer(function(input, output, session) {
       
       # for each click on the plot, add or remove that data point from the list
       #   of selected data points
-      
       tryCatch({
         # capture the point form the user click
         event_row <- rownames(
@@ -184,19 +183,21 @@ shinyServer(function(input, output, session) {
     
     # summary output
     output$means_summary <- renderText({
-        
-        dat <- DGP()
-        
-        SATE <- round(mean(dat$y_1 - dat$y_0), 2)
-        SATE_est <- round(mean(dat$Y[dat$z == 1]) - mean(dat$Y[dat$z == 0]), 2)
-        reg <- round(coef(lm(Y ~ x + z, data = dat))[['z']], 2)
-        
-        tibble(Method = c('Calculated SATE', 'Estimated SATE', 'Regression'),
-               Tau = c(SATE, SATE_est, reg)) %>% 
-        knitr::kable(digits = 2, format = 'html') %>% 
-          kableExtra::kable_styling(
-            bootstrap_options = c("striped", "hover", "condensed")
-          )
+      # get the data
+      dat <- DGP()
+      
+      # calculate estimates
+      SATE <- round(mean(dat$y_1 - dat$y_0), 2)
+      SATE_est <- round(mean(dat$Y[dat$z == 1]) - mean(dat$Y[dat$z == 0]), 2)
+      reg <- round(coef(lm(Y ~ x + z, data = dat))[['z']], 2)
+      
+      # assemble estimates into a dataframe and format
+      tibble(
+        Method = c('Calculated SATE', 'Estimated SATE', 'Regression'),
+        Tau = c(SATE, SATE_est, reg)
+      ) %>%
+        knitr::kable(digits = 2, format = 'html') %>%
+        kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
     })  
     
     # render the frames for SATE    
@@ -245,7 +246,7 @@ shinyServer(function(input, output, session) {
       # this animates by interpolating the data and only render the frame
       # according to the slider input
       
-      # get data and filter to just one frame
+      # get data
       dat_all <- render_frames_reactive()
 
       # filter the interpolated data to just the observable data
@@ -267,10 +268,8 @@ shinyServer(function(input, output, session) {
                x = 'x',
                y = 'y',
                fill = NULL)
-      }
-      
-      # plot the intermediary frames highlighting the observable data
-      if (input$means_slider_frame_est_SATE %in% 2:6){
+      } else if (input$means_slider_frame_est_SATE %in% 2:6){
+        # plot the intermediary frames highlighting the observable data
         p <- dat_all %>% 
           filter(frame == 1) %>% 
           pivot_longer(cols = c("y_0", "y_1")) %>% 
@@ -285,10 +284,8 @@ shinyServer(function(input, output, session) {
                fill = NULL) +
           scale_fill_discrete(labels = c("y_0", "y_1")) +
           guides(alpha = FALSE)
-      }
-      
-      # plot the rest of the frames
-      if (input$means_slider_frame_est_SATE >= 7){
+      } else if (input$means_slider_frame_est_SATE >= 7){
+        # plot the rest of the frames
         p <- all_frames %>% 
           filter(frame == input$means_slider_frame_est_SATE) %>%
           ggplot() +
@@ -300,14 +297,15 @@ shinyServer(function(input, output, session) {
                y = 'y',
                fill = NULL) +
           scale_fill_discrete(labels = c("y_0", "y_1"))
-        
       }
  
       # on the last frame, add error bars to highlight difference in points
       if (input$means_slider_frame_est_SATE == 26){
-
+        
+        # filter the data to the current frame
         dat <- dat_all %>% filter(frame == max(frame))
         
+        # estimate SATE and calculate the position of the errorbar
         SATE_est <- round(mean(dat$Y[dat$z == 1]) - mean(dat$Y[dat$z == 0]), 2)
         bar_position <- tibble(x = mean(dat$x) + 1, ymin = mean(dat$y_0),
                                ymax = mean(dat$y_1))
@@ -325,7 +323,7 @@ shinyServer(function(input, output, session) {
     # regression plot animation
     output$means_plot_regression <- renderPlot({
       
-      # get data and filter to just one frame
+      # get data
       dat_all <- render_frames_reactive()
       
       # filter the interpolated data to just the observable data
@@ -370,10 +368,8 @@ shinyServer(function(input, output, session) {
                fill = NULL) +
           scale_fill_discrete(labels = c("y_0", "y_1")) +
           guides(alpha = FALSE)
-      }
-      
-      # plot the regression lines
-      if (input$means_slider_frame_regression %in% 7:11){
+      } else if (input$means_slider_frame_regression %in% 7:11){
+        # plot the regression lines
         p <- all_frames %>% 
           filter(frame == 7) %>%
           ggplot(aes(x = x, y = value, fill = as.logical(z))) +
@@ -389,10 +385,8 @@ shinyServer(function(input, output, session) {
                fill = NULL) +
           scale_fill_discrete(labels = c("y_0", "y_1"))
         
-      }
-      
-      # plot the regression lines and remove the data
-      if (input$means_slider_frame_regression >= 12){
+      } else if (input$means_slider_frame_regression >= 12){
+        # plot the regression lines and remove the data
         p <- all_frames %>% 
           filter(frame == input$means_slider_frame_regression) %>%
           ggplot(aes(x = x, y = value, fill = as.logical(z))) +
@@ -425,17 +419,17 @@ shinyServer(function(input, output, session) {
       
       return(p)
     })
-    
 
     # define the data generating process generations using the predefined module
     DGP_EB <- dgpServer(id = "means_EB_")
-
     
+    # when user clicks run sim, build the randomization and sampling distribution
     observeEvent(input$means_EB_button_run_sim, {
       
       # build randomization distribution plot when user clicks run simulation
       output$means_efficiency_plot_randomization <- renderPlot({
         
+        # get the data and user inputs
         dat <- isolate(DGP_EB())
         n_sims <- isolate(input$means_EB_slider_n_sims)
         n <- nrow(dat)
@@ -481,6 +475,7 @@ shinyServer(function(input, output, session) {
       # build sampling distribution plot when user clicks run simulation
       output$means_efficiency_plot_sampling <- renderPlot({
         
+        # get the user inputs
         n_sims <- isolate(input$means_EB_slider_n_sims)
         
         # run simulation, generating a new dataset each time
@@ -515,7 +510,6 @@ shinyServer(function(input, output, session) {
           labs(x = NULL,
                y = NULL,
                fill = NULL)
-        
       })
     })
     
@@ -536,12 +530,13 @@ shinyServer(function(input, output, session) {
       )
     })
 
+    # when user clicks run sim, build the randomization and sampling distribution
     observeEvent(input$means_bias_button_run_sim, {
       
       # build randomization distribution plot when user clicks run simulation
       output$means_bias_plot_randomization <- renderPlot({
         
-        # generate the data
+        # generate the data and get user inputs
         dat <- isolate(
           means_bias_DGP(
             means_bias_select_n = input$means_bias_select_n,
@@ -624,6 +619,7 @@ shinyServer(function(input, output, session) {
       # build sampling distribution plot when user clicks run simulation
       output$means_bias_plot_sampling <- renderPlot({
         
+        # get user inputs
         n_sims <- isolate(input$means_bias_slider_n_sims)
 
         # run simulation, generating a new dataset each time
@@ -667,9 +663,7 @@ shinyServer(function(input, output, session) {
           labs(x = NULL,
                y = NULL,
                fill = NULL)
-        
       })
-      
     })
     
 
@@ -691,6 +685,7 @@ shinyServer(function(input, output, session) {
       })
     })
     
+    # on user click, create a vector indicating treatment assignment
     treat <- eventReactive(input$propensity_button_set_treat, {
       # replace treatment vector with a new one derived from users inputs
       if (input$propensity_select_method == 'Dependent on covariates'){
@@ -717,7 +712,7 @@ shinyServer(function(input, output, session) {
           prob = probs
         )
       } else if (input$propensity_select_method == 'Random'){
-        # random
+        # random treatment assignment
         treat <- rbinom(nrow(master_df), size = 1, prob = 0.5)
       } else {stop("No selection for 'method to determine treatment'")}
       
@@ -876,59 +871,57 @@ shinyServer(function(input, output, session) {
              x = 'Propensity score',
              y = NULL) +
         theme(legend.title = element_blank())
-      
     })
     
     # plot of propensity score with arrows indicating match b/t treatment and control
     output$propensity_plot_matching <- renderPlot({
 
-    if (input$propensity_match_type_input == 'Nearest neighbor'){
-      p_scores() %>%
-        mutate(Z = recode(Z, `1` = 'Treatment', `0` = "Control")) %>%
-        ggplot(aes(x = score, y = Z, fill = Z)) +
-        geom_segment(aes(x = score, xend = score_match,
-                         y = 'Treatment', yend = 'Control'),
-                     alpha = 0.4, lineend = 'round', linejoin = 'mitre', color = 'grey20',
-                     size = 1.2, arrow = arrow(length = unit(0.06, "npc"))) +
-        geom_point(shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 1) +
-        scale_x_continuous(limits = 0:1) +
-        labs(title = 'The arrows show how the treatment observations are matched to the control observations\n',
-             x = 'Propensity score',
-             y = NULL,
-             fill = NULL)
-      
-    } else if (input$propensity_match_type_input == 'Radius matching'){
-      
-      # pull data and add left and right points for plotting the geom_rect
-      dat <- p_scores() %>% 
-        mutate(Z = recode(Z, `1` = 'Treatment', `0` = "Control"),
-               Z = factor(Z, levels = c('Low', 'Control', 'Treatment', 'High')),
-               left = ifelse(Z == 'Treatment', score - (input$propensity_slider_caliper/2), NA),
-               right = ifelse(Z == 'Treatment', score + (input$propensity_slider_caliper/2), NA))
-      
-      dat %>% 
-        distinct(index, .keep_all = TRUE) %>%
-        ggplot(aes(x = score, y = Z, fill = Z)) +
-        geom_vline(aes(xintercept = left), alpha = 0.2) +
-        geom_vline(aes(xintercept = right), alpha = 0.2) +
-        geom_rect(aes(xmin = left, xmax = right, ymin = 'Low', ymax = 'High'),
-                  fill = 'grey80', alpha = 0.1) +
-        geom_segment(data = dat,
-                     aes(x = score, xend = score_match,
-                         y = 'Treatment', yend = 'Control'),
-                     alpha = 0.4, lineend = 'round', linejoin = 'mitre', color = 'grey20',
-                     size = 1.2, arrow = arrow(length = unit(0.06, "npc"))) +
-        geom_point(shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 1) +
-        scale_x_continuous(limits = 0:1) +
-        scale_y_discrete(drop = FALSE, labels = c("", "Control", "Treatment", "")) +
-        coord_cartesian(ylim = c(2, 3)) +
-        labs(title = "The arrows show how the treatment observations are matched to the control observations\nThe bands are the width of the caliper",
-             x = 'Propensity score',
-             y = NULL,
-             fill = NULL)
-      
-    } else stop("No selection for 'Matching type'")
-
+      if (input$propensity_match_type_input == 'Nearest neighbor'){
+        p_scores() %>%
+          mutate(Z = recode(Z, `1` = 'Treatment', `0` = "Control")) %>%
+          ggplot(aes(x = score, y = Z, fill = Z)) +
+          geom_segment(aes(x = score, xend = score_match,
+                           y = 'Treatment', yend = 'Control'),
+                       alpha = 0.4, lineend = 'round', linejoin = 'mitre', color = 'grey20',
+                       size = 1.2, arrow = arrow(length = unit(0.06, "npc"))) +
+          geom_point(shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 1) +
+          scale_x_continuous(limits = 0:1) +
+          labs(title = 'The arrows show how the treatment observations are matched to the control observations\n',
+               x = 'Propensity score',
+               y = NULL,
+               fill = NULL)
+        
+      } else if (input$propensity_match_type_input == 'Radius matching'){
+        
+        # pull data and add left and right points for plotting the geom_rect
+        dat <- p_scores() %>% 
+          mutate(Z = recode(Z, `1` = 'Treatment', `0` = "Control"),
+                 Z = factor(Z, levels = c('Low', 'Control', 'Treatment', 'High')),
+                 left = ifelse(Z == 'Treatment', score - (input$propensity_slider_caliper/2), NA),
+                 right = ifelse(Z == 'Treatment', score + (input$propensity_slider_caliper/2), NA))
+        
+        dat %>% 
+          distinct(index, .keep_all = TRUE) %>%
+          ggplot(aes(x = score, y = Z, fill = Z)) +
+          geom_vline(aes(xintercept = left), alpha = 0.2) +
+          geom_vline(aes(xintercept = right), alpha = 0.2) +
+          geom_rect(aes(xmin = left, xmax = right, ymin = 'Low', ymax = 'High'),
+                    fill = 'grey80', alpha = 0.1) +
+          geom_segment(data = dat,
+                       aes(x = score, xend = score_match,
+                           y = 'Treatment', yend = 'Control'),
+                       alpha = 0.4, lineend = 'round', linejoin = 'mitre', color = 'grey20',
+                       size = 1.2, arrow = arrow(length = unit(0.06, "npc"))) +
+          geom_point(shape = 21, color = 'grey40', size = 3, stroke = 1, alpha = 1) +
+          scale_x_continuous(limits = 0:1) +
+          scale_y_discrete(drop = FALSE, labels = c("", "Control", "Treatment", "")) +
+          coord_cartesian(ylim = c(2, 3)) +
+          labs(title = "The arrows show how the treatment observations are matched to the control observations\nThe bands are the width of the caliper",
+               x = 'Propensity score',
+               y = NULL,
+               fill = NULL)
+        
+      } else stop("No selection for 'Matching type'")
     })
 
 
@@ -938,6 +931,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$disc_select_DGP, {
       output$disc_select_DGP_formula <- renderText({
 
+        # get user inputs
         n <- input$disc_numeric_n
         tau <- input$disc_numeric_tau
         e <- input$disc_slider_error
@@ -1003,7 +997,7 @@ shinyServer(function(input, output, session) {
       # this adds a correction so they still plot in roughly the same area
       slope_correction <- 50 - (50 * slope)
       
-      # generate age and elgibility vectors
+      # generate age and eligibility vectors
       age <- rnorm(n, 50, 12)
       eligible <- (age > cutoff)
       
@@ -1020,16 +1014,8 @@ shinyServer(function(input, output, session) {
         eligible <- (age > cutoff)
         y_0 <- 35 + 0 + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, 0, e)
         y_1 <- 35 + tau + 0.0003 * (age - 45) + 0.0003 * (age - 45)^2 + 0.0003 * (age - 45)^3 + rnorm(n, 0, e)
-      }
-      
-      # scale the numbers between 0 and 100. This may throw off the numbers
-        # a little but ensures everything is within the plot limits
-      # x <- c(y_0, y_1)
-      # scaled <- ((x - min(x)) / (max(x) - min(x))) * 100
-      # rm(x)
-      # y_0 <- scaled[0:length(y_0)]
-      # y_1 <- scaled[(length(y_0)+1):(length(y_0) + length(y_1))]
-      
+      } else stop("No discontinuity DGP process selected")
+
       # store the results in separate dataframes
       full <- data.frame(age, eligible, y_0, y_1)
       obs <- data.frame(age, eligible, y = y_0 * (eligible == 0) + y_1 * eligible)
@@ -1040,13 +1026,16 @@ shinyServer(function(input, output, session) {
     # observable data only plot
     output$disc_plot_observable <- renderPlot({
 
+      # get user inputs and set min max for plotting the grey boxes
       cutoff <- input$disc_numeric_cutoff 
       min_age <- cutoff - (input$disc_numeric_window / 2)
       max_age <- cutoff + (input$disc_numeric_window / 2)
       
+      # get the data
       data_obs <- disc_data()[['observed']]
       dat_cut <- data_obs[data_obs$age >= min_age & data_obs$age <= max_age,]
       
+      # plot it
       p <- data_obs %>% 
         ggplot(aes(x = age, y = y, fill = as.logical(eligible))) +
         geom_rect(data = tibble(xmin = min_age, xmax = 0, ymin = 0, ymax = 100),
@@ -1086,6 +1075,7 @@ shinyServer(function(input, output, session) {
         mean_eligible_0 <- mean(data_obs[data_obs$eligible == 0 & data_obs$age >= min_age & data_obs$age <= max_age, 'y'])
         mean_eligible_1 <- mean(data_obs[data_obs$eligible == 1 & data_obs$age >= min_age & data_obs$age <= max_age, 'y'])
         
+        # add mean lines to the plot
         p <- p +
           geom_segment(data = tibble(x = min_age, xend = cutoff, y = mean_eligible_0, yend = mean_eligible_0),
                     inherit.aes = FALSE,
@@ -1095,7 +1085,7 @@ shinyServer(function(input, output, session) {
                        inherit.aes = FALSE,
                        aes(x = x, xend = xend, y = y, yend = yend),
                        size = 1.1, color = 'grey10')
-    }
+    } else stop("No selection for discontinuity model")
       
       return(p)
     })
@@ -1103,8 +1093,10 @@ shinyServer(function(input, output, session) {
     # all-seeing plot
     output$disc_plot_all <- renderPlot({
       
+      # get the data
       data_full <- disc_data()[['full']]
 
+      # plot it
       p <- data_full %>% 
         pivot_longer(cols = c('y_1', "y_0")) %>% 
         ggplot(aes(x = age, y = value, fill = name, group = name)) +
@@ -1122,21 +1114,15 @@ shinyServer(function(input, output, session) {
       if (input$disc_select_model == 'Linear'){
         p <- p +
           geom_smooth(color = 'grey10', method = 'lm', formula = y ~ x)
-      }
-
-      if (input$disc_select_model == 'Polynomial - quadratic'){
+      } else if (input$disc_select_model == 'Polynomial - quadratic'){
         p <- p +
           geom_smooth(color = 'grey10', method = 'lm', 
                       formula = y ~ poly(x, 2, raw = TRUE))
-      }
-
-      if (input$disc_select_model == 'Polynomial - cubic'){
+      } else if (input$disc_select_model == 'Polynomial - cubic'){
         p <- p +
           geom_smooth(color = 'grey10', method = 'lm', 
                       formula = y ~ poly(x, 3, raw = TRUE))
-      }
-      
-     if (input$disc_select_model == 'Difference in means'){
+      } else if (input$disc_select_model == 'Difference in means'){
 
        # calculate min and max ages for plotting
        min_age <- min(data_full$age, na.rm = TRUE)
@@ -1146,6 +1132,7 @@ shinyServer(function(input, output, session) {
        mean_eligible_0 <- mean(data_full$y_0, na.rm = TRUE)
        mean_eligible_1 <- mean(data_full$y_1, na.rm = TRUE)
        
+       # add the mean lines to the plot
        p <- p +
          geom_segment(data = tibble(x = min_age, xend = max_age, y = mean_eligible_0, yend = mean_eligible_0),
                      inherit.aes = FALSE,
@@ -1155,7 +1142,7 @@ shinyServer(function(input, output, session) {
                      inherit.aes = FALSE,
                      aes(x = x, xend = xend, y = y, yend = yend),
                      size = 1.1, color = 'grey10')
-    }
+    } else stop("No selection for discontinuity model")
       
       return(p)
     })

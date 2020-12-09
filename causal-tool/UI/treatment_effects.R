@@ -25,7 +25,7 @@ UI_treatment_effects <- tabPanel(
                    id = 'div_means_slider_frame_SATE',
                    sliderInput(
                      inputId = 'means_slider_frame_SATE',
-                     label = "Calulating SATE frame:",
+                     label = "Calculating SATE frame:",
                      value = 1,
                      min = 1,
                      max = 20,
