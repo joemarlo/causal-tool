@@ -14,13 +14,13 @@ UI_fundamental_problem <- tabPanel(
               width = '50%',
               h5("Causal inference is a missing data problem. We can only observe one potential outcome. We see that the person either receives the treatment or doesn't receive the treatment."),
               br(),
-              "For example, if a person recieves an experiment drug, will they develop heart disease?",
+              "For example, if a person recieves an experimental drug, will they develop heart disease?",
               br(),br()
               ),
             scrolly_section(
               id = "fundamental_scroll_two",
               width = '50%',
-              "But what if they don't receive the drug, would they have developed heart disease?",
+              "But what if they don't receive the drug, would they still have developed heart disease?",
               br(),br(),br()
               ),
             scrolly_section(

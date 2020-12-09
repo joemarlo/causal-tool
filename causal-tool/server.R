@@ -26,9 +26,7 @@ shinyServer(function(input, output, session) {
 
       # filter df to that series and clean up names
       df <- spurious_df %>% 
-        filter(id == current_id) %>% 
-        mutate(article = str_replace_all(article, "_", " "),
-               article = str_to_title(article))
+        filter(id == current_id)
       
       # calculate correlation between the series
       # corr <- df %>% pivot_wider(names_from = 'article', values_from = 'views')
@@ -43,9 +41,11 @@ shinyServer(function(input, output, session) {
         mutate(views = scale(views)) %>% 
         ggplot(aes(x = date, y = views, color = article, fill = article)) +
         geom_line() +
-        geom_point(shape = 21, color = 'black', size = 4) +
+        geom_point(shape = 21, color = 'black', size = 3.5, alpha = 0.9) +
         scale_x_date(date_breaks = '1 year', date_labels = '%Y') +
         scale_y_continuous(labels = NULL) +
+        scale_fill_brewer(palette = 'Set2') +
+        scale_color_brewer(palette = 'Set2') +
         labs(title = paste0("Spurious correlations: ", article_names),
              subtitle = 'Wikipedia page views over time',
              x = NULL,

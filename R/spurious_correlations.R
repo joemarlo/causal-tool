@@ -154,8 +154,38 @@ pairs %>%
     tibble(cor = cor(df[,1], df[,2]))
   })
 
-# write out final dataset
-pairs %>% 
+# filter dataset to just handpicked, clean up names, and write out final dataset
+final_df <- pairs %>% 
   filter(id %in% handpicked) %>%
-  mutate(date = as.Date(date)) %>% 
+  mutate(date = as.Date(date))
+final_df %>% 
+  distinct(article) %>% 
+  mutate(new_name = c('Amazon (company)',
+                      'Causal Inference',
+                      'Jameela Jamil',
+                      'BBC',
+                      'Flag of Brazil',
+                      'Al Jazeera',
+                      'Emily Hampshire',
+                      'Noah Reid',
+                      'Zodiac',
+                      'Google Drive',
+                      'Sleep paralysis',
+                      'Chris Elliott',
+                      'California',
+                      'New York University',
+                      'YouTube',
+                      'Episodes of Shameless TV series',
+                      'R (programming language)',
+                      'Isabela Moner',
+                      'Chicago',
+                      'Afghanistan',
+                      'Microsoft',
+                      'Sons of Anarchy',
+                      'Index of Economic Freedom',
+                      'John Wick films'
+  )) %>% 
+  right_join(final_df, by = 'article') %>%
+  select(-article) %>%
+  rename(article = new_name) %>%
   write_csv("causal-tool/data/wikipedia_page_views.csv")
